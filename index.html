@@ -130,10 +130,20 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
 .hstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:rgba(79,195,247,.28) transparent}
 .hb{flex-shrink:0;background:rgba(13,59,110,.38);border:1px solid rgba(79,195,247,.1);border-radius:8px;padding:7px 9px;text-align:center;min-width:58px}
 .hb.now{border-color:rgba(255,215,0,.48);background:rgba(255,215,0,.07)}
+.hb.best{border-color:rgba(105,240,174,.6);background:rgba(105,240,174,.08)}
 .ht{font-size:.52rem;color:var(--muted);margin-bottom:2px}
 .hi2{font-size:.88rem;margin-bottom:2px}
 .htp{font-size:.64rem;color:var(--text);font-weight:700}
 .hw{font-size:.5rem;color:var(--muted);margin-top:1px}
+.hscore{font-size:.52rem;font-weight:700;margin-top:2px}
+.bwin{background:rgba(10,35,64,.75);border:1px solid rgba(105,240,174,.3);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.bwin-title{font-family:'Playfair Display',serif;font-size:.9rem;color:#69f0ae;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.bwin-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(79,195,247,.07)}
+.bwin-row:last-child{border-bottom:none}
+.bwin-rank{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;min-width:28px}
+.bwin-time{font-size:.75rem;color:var(--text);font-weight:700;min-width:55px}
+.bwin-score{font-size:.7rem;font-weight:700;min-width:42px}
+.bwin-detail{font-size:.56rem;color:var(--muted);line-height:1.5}
 
 /* ── SOURCES ── */
 .foot{text-align:center;font-size:.5rem;color:rgba(127,179,211,.28);padding:8px 12px 22px;line-height:1.8}
@@ -253,7 +263,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
   </div>
 
   <div class="condsec">
-    <div class="sh">⛵ Current Conditions</div>
+    <div class="sh" id="condHead">⛵ Current Conditions</div>
     <div class="sbox">
       <div class="stbar" id="stbar"></div>
       <div class="shead">
@@ -265,6 +275,8 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
       <div class="facts" id="facts"></div>
     </div>
     <div class="cgrid" id="cgrid"></div>
+    <div class="sh" style="margin-top:2px">🏆 Best Boating Windows (8am–5pm)</div>
+    <div class="bwin" id="bwin"></div>
     <div class="sh" style="margin-top:2px">Hourly Outlook</div>
     <div class="hstrip" id="hstrip"></div>
   </div>
@@ -801,6 +813,10 @@ async function loadAll(){
     // Compass needle
     var ndStyle = `position:absolute;top:3px;left:50%;width:2px;height:11px;margin-left:-1px;border-radius:1px;background:linear-gradient(to bottom,#ff6b6b 50%,#4fc3f7 50%);transform-origin:bottom center;transform:translateX(-50%) rotate(${windDir}deg)`;
 
+    // Update conditions section header
+    var isSelectedToday = (dateInput === nowIsoET().slice(0,10));
+    document.getElementById('condHead').textContent = isSelectedToday ? '⛵ Current Conditions' : '⛵ Conditions — '+new Date(dateInput+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+
     // Boating score
     var bs = calcBoatScore(windSpeed, waveH||0, surf, cross, sst||75, cloud);
     document.getElementById('snum').innerHTML = bs.score+'<span>/10</span>';
@@ -824,29 +840,77 @@ async function loadAll(){
       cc('☀️','UV Index',`<div class="cv" style="color:${uvColor}">${uv}</div><div class="csub">${uvLabel}</div>`)+
       cc('📊','Pressure',`<div class="cv" style="font-size:.95rem">${pressure} <span style="font-size:.76rem;color:var(--muted)">hPa</span></div><div class="csub">${pTrend}</div>`);
 
-    // Hourly strip (next 12h)
-    // API times are ET local strings like "2026-03-07T21:00" — match against ET "now"
-    var nowIsoH = nowIsoET(); // e.g. "2026-03-07T21"
-    var hIdx = wHourly.time.findIndex(t=>t.startsWith(nowIsoH));
-    if(hIdx<0) hIdx=0;
+    // ── HOURLY BOATING SCORES for selected date (8am–5pm window) ──
+    // Build per-hour scores for the entire selected date
+    var selDatePrefix = dateInput; // "YYYY-MM-DD"
+    var hourlyScores = []; // {hour, hh, score, wind, wave, cloud, sst, label}
+    for(var h=0;h<24;h++){
+      var hPad = String(h).padStart(2,'0');
+      var timeKey = selDatePrefix+'T'+hPad;
+      var wI = wHourly.time.findIndex(t=>t.startsWith(timeKey));
+      var mI = mHourly.time.findIndex(t=>t.startsWith(timeKey));
+      if(wI<0) continue;
+      var hWs  = Math.round(wHourly.wind_speed_10m[wI]);
+      var hWd  = Math.round(wHourly.wind_direction_10m[wI]);
+      var hCld = wHourly.cloud_cover[wI];
+      var hWvH = mI>=0&&mHourly.wave_height ? +mHourly.wave_height[mI].toFixed(1) : 0;
+      var hSwD = mI>=0&&mHourly.swell_wave_direction ? mHourly.swell_wave_direction[mI] : hWd;
+      var hSst = sst||75; // use current SST (doesn't vary much hourly)
+      var hSurf = deriveSurface(hWs, hWvH);
+      var hCross = deriveCrossChop(hWd, hSwD, hWs);
+      var hBs = calcBoatScore(hWs, hWvH, hSurf, hCross, hSst, hCld);
+      var lbl = h===0?'12AM':h<12?h+'AM':h===12?'12PM':(h-12)+'PM';
+      hourlyScores.push({hour:h, lbl:lbl, score:hBs.score, col:hBs.col, wind:hWs, wave:hWvH, cloud:hCld, surf:hSurf.label, cross:hCross});
+    }
+
+    // ── BEST BOATING WINDOWS (8am–5pm only) ──
+    var windowScores = hourlyScores.filter(s=>s.hour>=8&&s.hour<=17);
+    var sorted = windowScores.slice().sort((a,b)=>b.score-a.score);
+    var top3 = sorted.slice(0,3);
+    var medals = ['🥇','🥈','🥉'];
+    var bwinHtml = top3.length ? top3.map(function(s,i){
+      var surfTag = s.cross ? ' · ⚡ Cross Chop' : '';
+      return '<div class="bwin-row">'+
+        '<div class="bwin-rank">'+medals[i]+'</div>'+
+        '<div class="bwin-time">'+s.lbl+'</div>'+
+        '<div class="bwin-score" style="color:'+s.col+'">'+s.score+'/10</div>'+
+        '<div class="bwin-detail">'+s.wind+' mph wind · '+s.wave+'ft waves · '+s.surf+surfTag+'</div>'+
+        '</div>';
+    }).join('') : '<div style="color:var(--muted);font-size:.65rem;padding:6px 0">No data available for selected date</div>';
+    document.getElementById('bwin').innerHTML = bwinHtml;
+
+    // ── HOURLY STRIP — show full selected date, highlight best window + NOW ──
+    var isToday = (dateInput === nowIsoET().slice(0,10));
+    var nowHourVal = nowHourET();
+    var bestHour = top3.length ? top3[0].hour : -1;
     var hHtml='';
     var wIco=['☀️','🌤️','⛅','🌥️','☁️','🌦️'];
-    for(var i=0;i<12;i++){
-      var idx2 = hIdx+i;
-      if(idx2>=wHourly.time.length) break;
-      // Parse hour directly from the API time string (already ET local)
-      var apiTime = wHourly.time[idx2]; // "2026-03-07T21:00"
-      var hh = parseInt(apiTime.slice(11,13), 10);
-      var hlbl = i===0?'NOW':(hh===0?'12AM':hh<12?hh+'AM':hh===12?'12PM':(hh-12)+'PM');
-      var hWind = Math.round(wHourly.wind_speed_10m[idx2]);
-      var hCloud = wHourly.cloud_cover[idx2];
-      var hTemp = Math.round(wHourly.temperature_2m[idx2]);
-      var mHIdx = mHourly.time.findIndex(t=>t.startsWith(wHourly.time[idx2].slice(0,13)));
-      var hWave = mHIdx>=0&&mHourly.wave_height ? +mHourly.wave_height[mHIdx].toFixed(1) : '';
-      var hIco = wIco[Math.min(5,Math.floor(hCloud/18))];
-      hHtml+=`<div class="hb${i===0?' now':''}"><div class="ht">${hlbl}</div><div class="hi2">${hIco}</div><div class="htp">${hTemp}°</div><div class="hw">${hWind} mph</div>${hWave?'<div class="hw">'+hWave+'ft</div>':''}</div>`;
-    }
+    hourlyScores.forEach(function(hs){
+      var isNow = isToday && hs.hour === nowHourVal;
+      var isBest = hs.hour === bestHour;
+      var cls = isNow ? ' now' : (isBest ? ' best' : '');
+      var topLbl = isNow ? 'NOW' : hs.lbl;
+      var wI2 = wHourly.time.findIndex(t=>t.startsWith(selDatePrefix+'T'+String(hs.hour).padStart(2,'0')));
+      var hTemp2 = wI2>=0 ? Math.round(wHourly.temperature_2m[wI2]) : '—';
+      var hCld2  = wI2>=0 ? wHourly.cloud_cover[wI2] : 0;
+      var hIco = wIco[Math.min(5,Math.floor(hCld2/18))];
+      var scoreColor = hs.score>=7.5?'#69f0ae':hs.score>=5.5?'#ffd700':hs.score>=3.5?'#ffb74d':'#ef9a9a';
+      hHtml+='<div class="hb'+cls+'">'+
+        '<div class="ht">'+topLbl+'</div>'+
+        '<div class="hi2">'+hIco+'</div>'+
+        '<div class="htp">'+hTemp2+'°</div>'+
+        '<div class="hw">'+hs.wind+' mph</div>'+
+        (hs.wave?'<div class="hw">'+hs.wave+'ft</div>':'')+
+        '<div class="hscore" style="color:'+scoreColor+'">'+hs.score+'</div>'+
+        '</div>';
+    });
     document.getElementById('hstrip').innerHTML = hHtml;
+    // Scroll hourly strip to NOW or 8am on selected date
+    setTimeout(function(){
+      var strip = document.getElementById('hstrip');
+      var nowCard = strip.querySelector('.now') || strip.querySelector('.hb:nth-child(9)');
+      if(nowCard) nowCard.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    }, 100);
 
     // Timestamp
     document.getElementById('dataTs').textContent = 'Data fetched: '+nowET().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
