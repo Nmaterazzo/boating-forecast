@@ -264,6 +264,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
 
   <div class="condsec">
     <div class="sh" id="condHead">⛵ Current Conditions</div>
+    <div id="liveConditions">
     <div class="sbox">
       <div class="stbar" id="stbar"></div>
       <div class="shead">
@@ -275,6 +276,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
       <div class="facts" id="facts"></div>
     </div>
     <div class="cgrid" id="cgrid"></div>
+    </div>
     <div class="sh" style="margin-top:2px">🏆 Best Boating Windows (8am–5pm)</div>
     <div class="bwin" id="bwin"></div>
     <div class="sh" style="margin-top:2px">Hourly Outlook</div>
@@ -813,9 +815,10 @@ async function loadAll(){
     // Compass needle
     var ndStyle = `position:absolute;top:3px;left:50%;width:2px;height:11px;margin-left:-1px;border-radius:1px;background:linear-gradient(to bottom,#ff6b6b 50%,#4fc3f7 50%);transform-origin:bottom center;transform:translateX(-50%) rotate(${windDir}deg)`;
 
-    // Update conditions section header
+    // Update conditions section header + hide live conditions if not today
     var isSelectedToday = (dateInput === nowIsoET().slice(0,10));
     document.getElementById('condHead').textContent = isSelectedToday ? '⛵ Current Conditions' : '⛵ Conditions — '+new Date(dateInput+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+    document.getElementById('liveConditions').style.display = isSelectedToday ? '' : 'none';
 
     // Boating score
     var bs = calcBoatScore(windSpeed, waveH||0, surf, cross, sst||75, cloud);
