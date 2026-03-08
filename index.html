@@ -487,7 +487,7 @@ function calcBoatScore(ws, wvH, surf, cross, sst, cloud){
 }
 
 // ── DRAW CHART ──
-function drawChart(data, unitLabel, view, hiloData){
+function drawChart(data, unitLabel, view, hiloData, isToday){
   var cv=document.getElementById('cv');
   var dpr=window.devicePixelRatio||1;
   var W=cv.parentElement.getBoundingClientRect().width-20, H=240;
@@ -520,8 +520,8 @@ function drawChart(data, unitLabel, view, hiloData){
   for(var i=1;i<data.length;i++){var m=(tx(i-1)+tx(i))/2; ctx.bezierCurveTo(m,ty(data[i-1].v),m,ty(data[i].v),tx(i),ty(data[i].v));}
   ctx.strokeStyle=lg; ctx.lineWidth=2.5; ctx.stroke();
 
-  // NOW line — find position by matching current ET hour to the data array
-  if(view==='24h'){
+  // NOW line — only show if selected date is today
+  if(view==='24h' && isToday){
     var nowH = nowHourET(), nowM = nowMinuteET();
     var nowIdx = data.findIndex(function(d){ return d.hour === nowH; });
     if(nowIdx >= 0){
@@ -757,6 +757,7 @@ async function loadAll(){
       ' &nbsp;·&nbsp; <span style="color:#ffd700">'+nowET().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</span>';
 
     // Chart
+    var isSelectedToday = (dateInput === nowIsoET().slice(0,10));
     document.getElementById('ctit').textContent = view==='24h'?'24-Hour Tide Forecast':'7-Day Tide Outlook';
     // Only show hi/lo markers that fall within the chart's actual time window
     var chartStart = new Date(chartData[0].label).getTime();
@@ -765,7 +766,7 @@ async function loadAll(){
       var t = new Date(p.t).getTime();
       return t >= chartStart && t <= chartEnd;
     });
-    drawChart(chartData, u, view, hiloInRange);
+    drawChart(chartData, u, view, hiloInRange, isSelectedToday);
 
     // Tide table
     var tableRows = hiloRaw.map(p=>{
@@ -837,7 +838,6 @@ async function loadAll(){
     var ndStyle = `position:absolute;top:3px;left:50%;width:2px;height:11px;margin-left:-1px;border-radius:1px;background:linear-gradient(to bottom,#ff6b6b 50%,#4fc3f7 50%);transform-origin:bottom center;transform:translateX(-50%) rotate(${windDir}deg)`;
 
     // Update conditions section header + hide live conditions if not today
-    var isSelectedToday = (dateInput === nowIsoET().slice(0,10));
     document.getElementById('condHead').textContent = isSelectedToday ? '⛵ Current Conditions' : '⛵ Conditions — '+new Date(dateInput+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
     document.getElementById('liveConditions').style.display = isSelectedToday ? '' : 'none';
 
@@ -934,12 +934,7 @@ async function loadAll(){
         '</div>';
     });
     document.getElementById('hstrip').innerHTML = hHtml;
-    // Scroll hourly strip to NOW or 8am on selected date
-    setTimeout(function(){
-      var strip = document.getElementById('hstrip');
-      var nowCard = strip.querySelector('.now') || strip.querySelector('.hb:nth-child(9)');
-      if(nowCard) nowCard.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-    }, 100);
+    // No auto-scroll — user controls scroll position
 
     // Timestamp
     document.getElementById('dataTs').textContent = 'Data fetched: '+nowET().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
