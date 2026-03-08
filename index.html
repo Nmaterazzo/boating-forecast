@@ -718,16 +718,22 @@ async function loadAll(){
       (nextLo?sc('sv-lo','Next Low',parseFloat(nextLo.v).toFixed(2),fmtTime(nextLo.t)):'');
 
     // Current tide
+    // Use current ET hour to find the right index — same anchor as the NOW line
+    var curNowIdx = chartData.findIndex(function(d){ return d.hour === nowHour; });
+    if(curNowIdx < 0) curNowIdx = Math.min(nowHour, chartData.length-1);
     var curH, curRising, curLabel;
     if(observed){
       curH = observed.v.toFixed(2);
-      var idx = chartData.findIndex(d=>d.label>=observed.t);
-      curRising = idx>0&&idx<chartData.length-1 ? chartData[idx+1].v>chartData[idx].v : null;
+      // Rising/falling: compare the hour BEFORE and AFTER current ET hour on the chart
+      var prevIdx = Math.max(0, curNowIdx - 1);
+      var nextIdx = Math.min(chartData.length-1, curNowIdx + 1);
+      curRising = chartData[nextIdx].v > chartData[prevIdx].v;
       curLabel = '⚡ Observed: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
     } else {
-      var nowIdx = Math.min(nowHour, chartData.length-1);
-      curH = (chartData[nowIdx]||{v:'—'}).v;
-      curRising = nowIdx<chartData.length-1 ? chartData[nowIdx+1].v>chartData[nowIdx].v : null;
+      curH = (chartData[curNowIdx]||{v:'—'}).v;
+      var prevIdx = Math.max(0, curNowIdx - 1);
+      var nextIdx = Math.min(chartData.length-1, curNowIdx + 1);
+      curRising = chartData[nextIdx].v > chartData[prevIdx].v;
       curLabel = 'Predicted: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
     }
     document.getElementById('curTxt').innerHTML =
