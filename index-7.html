@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anclote Island · Tides & Conditions</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky1:#020c18;--sky2:#0a1f3a;--sky3:#0d3b6e;--sky4:#1565a0;
+  --ocean1:#1565a0;--ocean2:#0a2340;--ocean3:#020c18;
+  --blue:#4fc3f7;--blue2:#81d4fa;--gold:#ffd700;--warm:#e8d5a3;
+  --panel:rgba(10,35,64,.92);--panel2:rgba(13,59,110,.5);
+  --border:rgba(79,195,247,.18);--text:#e8f4fd;--muted:#7fb3d3;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--sky1);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+
+/* ── HERO ── */
+.hero{position:relative;height:200px;background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 40%,var(--sky3) 75%,var(--sky4) 100%);overflow:hidden}
+.star{position:absolute;background:#fff;border-radius:50%;animation:tw 3s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+.sun{position:absolute;top:28px;right:60px;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#fff9cc,#ffd700 55%,#ff9c00);box-shadow:0 0 32px 12px rgba(255,200,0,.45),0 0 90px 25px rgba(255,150,0,.18);animation:sp 4s ease-in-out infinite}
+@keyframes sp{0%,100%{box-shadow:0 0 32px 12px rgba(255,200,0,.45),0 0 90px 25px rgba(255,150,0,.18)}50%{box-shadow:0 0 44px 18px rgba(255,200,0,.65),0 0 110px 35px rgba(255,150,0,.28)}}
+.hero-loc{position:absolute;bottom:18px;left:0;right:0;text-align:center}
+.hero-loc h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--text);text-shadow:0 0 32px rgba(79,195,247,.55);letter-spacing:.02em}
+.hero-loc p{font-size:.55rem;color:var(--muted);letter-spacing:.28em;text-transform:uppercase;margin-top:4px}
+
+/* ── OCEAN STRIP ── */
+.ocean{position:relative;height:90px;background:linear-gradient(180deg,var(--ocean1),var(--ocean2));overflow:hidden}
+.wl{position:absolute;bottom:0;left:0;width:200%;height:62px}
+.w1{animation:wm1 6s linear infinite}
+.w2{animation:wm2 9s linear infinite;bottom:8px;opacity:.55}
+.w3{animation:wm3 12s linear infinite;bottom:16px;opacity:.38}
+@keyframes wm1{to{transform:translateX(-50%)}}
+@keyframes wm2{0%{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes wm3{to{transform:translateX(-50%)}}
+.bird{position:absolute;top:14px;font-size:1.2rem;animation:fly 24s linear infinite}
+@keyframes fly{0%{left:3%;transform:scaleX(1)}48%{left:92%;transform:scaleX(1)}50%{left:92%;transform:scaleX(-1)}98%{left:3%;transform:scaleX(-1)}100%{left:3%;transform:scaleX(1)}}
+
+/* ── CONTROLS ── */
+.ctrl{background:rgba(10,35,64,.98);border-bottom:1px solid var(--border);padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:flex-end}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cl{font-size:.52rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+select,input[type=date]{background:rgba(21,101,160,.28);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:.68rem;cursor:pointer;outline:none;min-width:150px;transition:border-color .2s}
+select:focus,input[type=date]:focus{border-color:var(--blue)}
+select option{background:#0a2340}
+.rbtn{background:rgba(79,195,247,.12);border:1px solid var(--border);color:var(--blue);padding:8px 16px;border-radius:5px;font-family:'Space Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .2s;letter-spacing:.1em;text-transform:uppercase;align-self:flex-end}
+.rbtn:hover{background:rgba(79,195,247,.22);border-color:var(--blue)}
+
+/* ── LOADING / ERROR ── */
+.loading{display:none;text-align:center;padding:28px;color:var(--muted);font-size:.7rem;letter-spacing:.15em}
+.loading.show{display:block}
+.ld-spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-bar{display:none;background:rgba(244,67,54,.12);border:1px solid rgba(244,67,54,.3);color:#ef9a9a;padding:8px 14px;font-size:.62rem;text-align:center;margin:0 12px 10px;border-radius:6px}
+.err-bar.show{display:block}
+
+/* ── STATUS BAR ── */
+.sbar{display:flex;gap:7px;padding:12px;background:rgba(2,12,24,.85);justify-content:center;flex-wrap:wrap}
+.sc{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;text-align:center;min-width:98px}
+.sl{font-size:.5rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.sv{font-family:'Playfair Display',serif;font-size:1.25rem}
+.su{font-size:.5rem;color:var(--muted);margin-top:2px}
+.sv-hi{color:var(--blue)}.sv-lo{color:var(--warm)}
+
+/* ── CURRENT TICKER ── */
+.cur{display:flex;align-items:center;justify-content:center;gap:9px;padding:8px 12px;margin:0 12px 12px;background:rgba(79,195,247,.07);border:1px solid var(--border);border-radius:8px;font-size:.68rem;flex-wrap:wrap;gap:6px}
+.pd{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:pu 2s ease-out infinite}
+@keyframes pu{0%{box-shadow:0 0 0 0 rgba(79,195,247,.7)}70%{box-shadow:0 0 0 9px rgba(79,195,247,0)}100%{box-shadow:0 0 0 0 rgba(79,195,247,0)}}
+
+/* ── CHART ── */
+.csec{padding:12px}
+.ctit{font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:var(--muted);margin-bottom:9px;text-align:center}
+.cwrap{position:relative;background:rgba(10,35,64,.6);border:1px solid var(--border);border-radius:12px;padding:12px 10px 40px;overflow:hidden}
+canvas{display:block;width:100%;height:240px}
+.shim{position:absolute;bottom:40px;left:10px;right:10px;height:28px;background:linear-gradient(90deg,transparent,rgba(79,195,247,.06),transparent);animation:sh 3.5s ease-in-out infinite;pointer-events:none}
+@keyframes sh{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+
+/* ── TABLE ── */
+.tsec{padding:0 12px 16px}
+.sh{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--blue);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.sh::before{content:'';display:inline-block;width:3px;height:14px;background:var(--blue);border-radius:2px}
+.mrow{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--panel2);border-radius:6px;margin-bottom:11px;font-size:.67rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.7rem}
+thead tr{background:rgba(21,101,160,.28)}
+th{padding:8px 10px;text-align:left;font-size:.52rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;font-weight:400}
+td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
+.bh{display:inline-block;background:rgba(79,195,247,.18);color:var(--blue);border:1px solid rgba(79,195,247,.38);padding:2px 8px;border-radius:3px;font-size:.58rem}
+.bl{display:inline-block;background:rgba(232,213,163,.13);color:var(--warm);border:1px solid rgba(232,213,163,.3);padding:2px 8px;border-radius:3px;font-size:.58rem}
+
+/* ── CONDITIONS ── */
+.condsec{padding:0 12px 20px}
+.sbox{background:rgba(10,35,64,.75);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden}
+.stbar{height:3px;position:absolute;top:0;left:0;right:0;border-radius:2px 2px 0 0}
+.shead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.stit{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--blue)}
+.sverd{font-size:.66rem;color:var(--muted);margin-top:3px}
+.snum{font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:700;line-height:1}
+.snum span{font-size:1rem;color:var(--muted)}
+.strk{height:8px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;margin-bottom:5px}
+.sfill{height:100%;border-radius:5px;transition:width .9s cubic-bezier(.34,1.56,.64,1)}
+.sticks{display:flex;justify-content:space-between;font-size:.48rem;color:rgba(127,179,211,.35);margin-bottom:10px}
+.facts{display:flex;flex-wrap:wrap;gap:5px}
+.fc{display:flex;align-items:center;gap:4px;font-size:.57rem;color:var(--muted);background:rgba(255,255,255,.04);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.07)}
+.fd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;margin-bottom:14px}
+.cc{background:rgba(13,59,110,.42);border:1px solid var(--border);border-radius:10px;padding:11px 12px;text-align:center}
+.ci{font-size:1.35rem;margin-bottom:4px;display:block}
+.cn{font-size:.5rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.cv{font-family:'Playfair Display',serif;font-size:1.2rem;line-height:1}
+.csub{font-size:.54rem;color:var(--muted);margin-top:3px}
+.cmpw{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:3px}
+.cmp{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:rgba(10,35,64,.7);position:relative;flex-shrink:0}
+.sg{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:.64rem;font-weight:700;margin-top:3px}
+.sg-glass{background:rgba(79,195,247,.15);border:1px solid rgba(79,195,247,.4);color:#81d4fa}
+.sg-ripple{background:rgba(255,213,0,.12);border:1px solid rgba(255,213,0,.35);color:#ffd700}
+.sg-chop{background:rgba(255,152,0,.12);border:1px solid rgba(255,152,0,.4);color:#ffb74d}
+.sg-rough{background:rgba(244,67,54,.12);border:1px solid rgba(244,67,54,.35);color:#ef9a9a}
+.cb{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:.57rem;margin-top:4px}
+.cb-on{background:rgba(244,67,54,.13);border:1px solid rgba(244,67,54,.38);color:#ef9a9a}
+.cb-off{background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.32);color:#a5d6a7}
+.tc{color:#81d4fa}.tw{color:#ffd700}.th{color:#ff8a65}
+.hstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:rgba(79,195,247,.28) transparent}
+.hb{flex-shrink:0;background:rgba(13,59,110,.38);border:1px solid rgba(79,195,247,.1);border-radius:8px;padding:7px 9px;text-align:center;min-width:58px}
+.hb.now{border-color:rgba(255,215,0,.48);background:rgba(255,215,0,.07)}
+.ht{font-size:.52rem;color:var(--muted);margin-bottom:2px}
+.hi2{font-size:.88rem;margin-bottom:2px}
+.htp{font-size:.64rem;color:var(--text);font-weight:700}
+.hw{font-size:.5rem;color:var(--muted);margin-top:1px}
+
+/* ── SOURCES ── */
+.foot{text-align:center;font-size:.5rem;color:rgba(127,179,211,.28);padding:8px 12px 22px;line-height:1.8}
+.src-badge{display:inline-block;background:rgba(79,195,247,.07);border:1px solid rgba(79,195,247,.12);padding:1px 6px;border-radius:3px;margin:1px}
+.data-ts{text-align:center;font-size:.52rem;color:rgba(127,179,211,.38);padding:4px 12px}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero" id="sky">
+  <div class="sun"></div>
+  <div class="hero-loc">
+    <h1>Anclote Island</h1>
+    <p>Port Richey · Pasco County · Florida · Gulf Coast</p>
+  </div>
+</div>
+
+<!-- OCEAN -->
+<div class="ocean">
+  <div class="bird">🦅</div>
+  <svg class="wl w1" viewBox="0 0 1440 65" preserveAspectRatio="none"><path d="M0,32 C180,8 360,58 540,32 C720,8 900,58 1080,32 C1260,8 1440,40 1440,40 L1440,65 L0,65Z" fill="#1565a0" opacity=".8"/><path d="M1440,32 C1260,8 1080,58 900,32 C720,8 540,58 360,32 C180,8 0,40 0,40 L0,65 L1440,65Z" fill="#0d3b6e" opacity=".5"/></svg>
+  <svg class="wl w2" viewBox="0 0 1440 65" preserveAspectRatio="none"><path d="M0,42 C240,18 480,60 720,38 C960,18 1200,56 1440,38 L1440,65 L0,65Z" fill="#0a2340" opacity=".6"/></svg>
+  <svg class="wl w3" viewBox="0 0 1440 65" preserveAspectRatio="none"><path d="M0,46 C300,24 600,62 900,42 C1200,22 1440,52 1440,46 L1440,65 L0,65Z" fill="#020c18" opacity=".7"/></svg>
+</div>
+
+<!-- CONTROLS -->
+<div class="ctrl">
+  <div class="cg">
+    <span class="cl">Station</span>
+    <select id="stSel">
+      <option value="8726520">Anclote Island, FL</option>
+      <option value="8726384">Port Richey, FL</option>
+      <option value="8726667">Tarpon Springs, FL</option>
+      <option value="8726607">New Port Richey, FL</option>
+    </select>
+  </div>
+  <div class="cg"><span class="cl">Date</span><input type="date" id="dtSel"></div>
+  <div class="cg">
+    <span class="cl">View</span>
+    <select id="vwSel">
+      <option value="24h">24-Hour</option>
+      <option value="7d">7-Day Outlook</option>
+    </select>
+  </div>
+  <div class="cg">
+    <span class="cl">Units</span>
+    <select id="unSel"><option value="ft">Feet (ft)</option><option value="m">Meters (m)</option></select>
+  </div>
+  <button class="rbtn" id="rfBtn">↻ Refresh</button>
+</div>
+
+<div class="loading" id="loading"><div class="ld-spin"></div><br>Fetching live data…</div>
+<div class="err-bar" id="errBar"></div>
+
+<div id="mainContent">
+  <div class="sbar" id="sBar"></div>
+  <div class="cur"><div class="pd"></div><span id="curTxt">Loading…</span></div>
+
+  <div class="csec">
+    <div class="ctit" id="ctit">24-Hour Tide Forecast</div>
+    <div class="cwrap"><canvas id="cv"></canvas><div class="shim"></div></div>
+  </div>
+
+  <div class="tsec">
+    <div class="mrow"><span id="mIco">🌙</span>&nbsp;<span id="mTxt">—</span></div>
+    <div class="sh">High &amp; Low Tide Schedule</div>
+    <table><thead><tr><th>Time</th><th>Type</th><th>Height</th><th>Day</th></tr></thead>
+    <tbody id="tBody"></tbody></table>
+  </div>
+
+  <div class="condsec">
+    <div class="sh">⛵ Current Conditions</div>
+    <div class="sbox">
+      <div class="stbar" id="stbar"></div>
+      <div class="shead">
+        <div><div class="stit">Boating Score</div><div class="sverd" id="sverd">—</div></div>
+        <div><div class="snum" id="snum">—<span>/10</span></div></div>
+      </div>
+      <div class="strk"><div class="sfill" id="sfill" style="width:0%"></div></div>
+      <div class="sticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+      <div class="facts" id="facts"></div>
+    </div>
+    <div class="cgrid" id="cgrid"></div>
+    <div class="sh" style="margin-top:2px">Hourly Outlook</div>
+    <div class="hstrip" id="hstrip"></div>
+  </div>
+
+  <div class="data-ts" id="dataTs"></div>
+</div>
+
+<div class="foot">
+  <span class="src-badge">NOAA CO-OPS</span> Tide predictions &amp; water levels · 
+  <span class="src-badge">Open-Meteo</span> Wind, atmosphere · 
+  <span class="src-badge">Open-Meteo Marine (ECMWF)</span> Waves &amp; SST · 
+  <span class="src-badge">Astronomical</span> Moon phase
+  <br>Station 8726520 · Anclote Island, FL · 28.1725°N 82.8444°W
+</div>
+
+<script>
+// ── STAR FIELD ──
+(function(){
+  var sk = document.getElementById('sky');
+  for(var i=0;i<55;i++){
+    var s=document.createElement('div');s.className='star';
+    var z=Math.random()*2.2+.4;
+    s.style.cssText='width:'+z+'px;height:'+z+'px;top:'+(Math.random()*100)+'%;left:'+(Math.random()*100)+'%;animation-delay:'+(Math.random()*4)+'s;animation-duration:'+(2+Math.random()*3)+'s';
+    sk.appendChild(s);
+  }
+})();
+
+// ── STATION CONFIG ──
+var STATIONS = {
+  '8726520': {name:'Anclote Island',   lat:28.1725, lon:-82.8444},
+  '8726384': {name:'Port Richey',      lat:28.2711, lon:-82.7198},
+  '8726667': {name:'Tarpon Springs',   lat:28.1453, lon:-82.7556},
+  '8726607': {name:'New Port Richey',  lat:28.2436, lon:-82.7198}
+};
+
+// ── UTILS ──
+function fmtTime(iso){
+  var d=new Date(iso);
+  return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+function fmtHour(h){
+  var a=h>=12?'PM':'AM',r=h%12===0?12:h%12;
+  return r+(h%1!==0?':'+String(Math.round((h%1)*60)).padStart(2,'0'):'')+''+a;
+}
+function dayName(offset){
+  var d=new Date();d.setDate(d.getDate()+offset);
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+}
+function toFt(m){return +(m*3.28084).toFixed(2);}
+
+// ── MOON PHASE (astronomical) ──
+function moonPhase(){
+  var known=new Date('2000-01-06T18:14:00Z');
+  var cycle=29.530588853;
+  var diff=(Date.now()-known.getTime())/(1000*60*60*24);
+  var age=((diff%cycle)+cycle)%cycle;
+  var phases=[
+    {min:0,   max:1.85, i:'🌑',t:'New Moon — Strong tidal range'},
+    {min:1.85,max:7.38, i:'🌒',t:'Waxing Crescent — Moderate tides'},
+    {min:7.38,max:9.22, i:'🌓',t:'First Quarter — Average range'},
+    {min:9.22,max:14.76,i:'🌔',t:'Waxing Gibbous — Building range'},
+    {min:14.76,max:16.61,i:'🌕',t:'Full Moon — Maximum tidal range'},
+    {min:16.61,max:22.15,i:'🌖',t:'Waning Gibbous — Decreasing'},
+    {min:22.15,max:23.99,i:'🌗',t:'Last Quarter — Average range'},
+    {min:23.99,max:29.53,i:'🌘',t:'Waning Crescent — Moderate'}
+  ];
+  for(var p of phases){if(age>=p.min&&age<p.max)return p;}
+  return phases[0];
+}
+
+// ── NOAA TIDES ──
+async function fetchNoaaTides(stationId, dateStr, datum, units){
+  // Hi/Lo predictions
+  var u = units==='m'?'metric':'english';
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=hilo&begin_date=${dateStr}&range=48`;
+  var r = await fetch(url);
+  var j = await r.json();
+  return j.predictions||[];
+}
+
+async function fetchNoaaHourly(stationId, dateStr, datum, units){
+  var u = units==='m'?'metric':'english';
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=h&begin_date=${dateStr}&range=48`;
+  var r = await fetch(url);
+  var j = await r.json();
+  return j.predictions||[];
+}
+
+async function fetchNoaaObserved(stationId, datum, units){
+  var u = units==='m'?'metric':'english';
+  var now = new Date();
+  var ds = now.getFullYear()+''+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=water_level&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&begin_date=${ds}&range=2`;
+  try{
+    var r = await fetch(url);
+    var j = await r.json();
+    if(j.data&&j.data.length>0){
+      var last = j.data[j.data.length-1];
+      return {v:parseFloat(last.v),t:last.t,observed:true};
+    }
+  }catch(e){}
+  return null;
+}
+
+// ── OPEN-METEO WEATHER ──
+async function fetchWeather(lat, lon){
+  var url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
+    `&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,pressure_msl`+
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,pressure_msl,visibility`+
+    `&wind_speed_unit=mph&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=7`;
+  var r = await fetch(url);
+  return r.json();
+}
+
+// ── OPEN-METEO MARINE (ECMWF for SST) ──
+async function fetchMarine(lat, lon){
+  var url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}`+
+    `&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,swell_wave_direction,sea_surface_temperature`+
+    `&current=wave_height,wave_period,wave_direction,sea_surface_temperature`+
+    `&length_unit=imperial&timezone=America%2FNew_York&forecast_days=7`;
+  var r = await fetch(url);
+  return r.json();
+}
+
+// ── DERIVE SURFACE CONDITIONS ──
+function deriveSurface(windSpeedMph, waveHeightFt){
+  if(windSpeedMph<=5 && waveHeightFt<0.5) return {label:'Glass',cls:'glass'};
+  if(windSpeedMph<=10 || waveHeightFt<1.0) return {label:'Ripple',cls:'ripple'};
+  if(windSpeedMph<=18 || waveHeightFt<2.5) return {label:'Chop',cls:'chop'};
+  return {label:'Rough',cls:'rough'};
+}
+function deriveCrossChop(windDeg, swellDeg, windSpeedMph){
+  var angle = Math.abs(windDeg - swellDeg) % 360;
+  if(angle > 180) angle = 360 - angle;
+  return angle > 35 && angle < 145 && windSpeedMph > 8;
+}
+function windDirLabel(deg){
+  var dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg/22.5)%16];
+}
+
+// ── BOATING SCORE ──
+function calcBoatScore(ws, wvH, surf, cross, sst, cloud){
+  var score=10, facts=[];
+  if(ws<=5)         facts.push({l:'Wind '+ws+' mph ✓',col:'#a5d6a7'});
+  else if(ws<=10){  score-=1;   facts.push({l:'Wind '+ws+' mph (-1)',col:'#fff59d'});}
+  else if(ws<=15){  score-=2.5; facts.push({l:'Wind '+ws+' mph (-2.5)',col:'#ffcc80'});}
+  else if(ws<=20){  score-=4;   facts.push({l:'Wind '+ws+' mph (-4)',col:'#ff8a65'});}
+  else{             score-=6;   facts.push({l:'Wind '+ws+' mph (-6)',col:'#ef9a9a'});}
+  if(wvH<0.5)       facts.push({l:'Calm waves ✓',col:'#a5d6a7'});
+  else if(wvH<1.5)  facts.push({l:'Waves '+wvH+'ft — mild',col:'#fff59d'});
+  else if(wvH<2.5){ score-=1.5; facts.push({l:'Waves '+wvH+'ft (-1.5)',col:'#ffcc80'});}
+  else{             score-=3;   facts.push({l:'Waves '+wvH+'ft (-3)',col:'#ef9a9a'});}
+  if(cross){        score-=1;   facts.push({l:'Cross chop (-1)',col:'#ff8a65'});}
+  if(sst>=80)       facts.push({l:'Water '+sst+'°F ✓',col:'#a5d6a7'});
+  else if(sst>=74){ score-=0.5; facts.push({l:'Water '+sst+'°F (-.5)',col:'#fff59d'});}
+  else if(sst>=68){ score-=1.5; facts.push({l:'Water '+sst+'°F (-1.5)',col:'#ffcc80'});}
+  else{             score-=3;   facts.push({l:'Water '+sst+'°F (-3)',col:'#81d4fa'});}
+  if(cloud<20)      facts.push({l:'Clear skies ✓',col:'#a5d6a7'});
+  else if(cloud<50){score-=0.5; facts.push({l:cloud+'% cloud (-.5)',col:'#fff59d'});}
+  else{             score-=1;   facts.push({l:cloud+'% cloud (-1)',col:'#ffcc80'});}
+  score = Math.max(1, Math.min(10, Math.round(score*2)/2));
+  var v,col;
+  if(score>=9){v='🏆 Perfect day on the water!';col='#69f0ae';}
+  else if(score>=7.5){v='✅ Great boating conditions';col='#a5d6a7';}
+  else if(score>=6){v='👍 Good — some chop possible';col:'#ffd700';}
+  else if(score>=4.5){v='⚠️ Fair — use caution';col='#ffb74d';}
+  else if(score>=3){v='🚨 Rough — small craft advisory';col='#ff8a65';}
+  else{v='⛔ Not recommended today';col='#ef5350';}
+  if(!col) col='#ffd700';
+  return{score,v,col,facts};
+}
+
+// ── DRAW CHART ──
+function drawChart(data, unitLabel, view){
+  var cv=document.getElementById('cv');
+  var dpr=window.devicePixelRatio||1;
+  var W=cv.parentElement.getBoundingClientRect().width-20, H=240;
+  cv.width=W*dpr; cv.height=H*dpr;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  var P={t:14,r:12,b:36,l:44}, cW=W-P.l-P.r, cH=H-P.t-P.b;
+  var aH=data.map(d=>d.v);
+  var mn=Math.min(...aH)-.15, mx=Math.max(...aH)+.15, rng=mx-mn;
+  var tx=i=>P.l+(i/(data.length-1))*cW;
+  var ty=h=>P.t+cH-((h-mn)/rng)*cH;
+
+  // Grid
+  ctx.strokeStyle='rgba(79,195,247,.06)'; ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){var yg=P.t+(g/4)*cH;ctx.beginPath();ctx.moveTo(P.l,yg);ctx.lineTo(P.l+cW,yg);ctx.stroke();}
+  ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(79,195,247,.16)'; ctx.lineWidth=1;
+  var mY=ty((mn+mx)/2); ctx.beginPath(); ctx.moveTo(P.l,mY); ctx.lineTo(P.l+cW,mY); ctx.stroke(); ctx.setLineDash([]);
+
+  // Fill
+  var gr=ctx.createLinearGradient(0,P.t,0,P.t+cH);
+  gr.addColorStop(0,'rgba(79,195,247,.45)'); gr.addColorStop(.5,'rgba(21,101,160,.28)'); gr.addColorStop(1,'rgba(10,35,64,.06)');
+  ctx.beginPath(); ctx.moveTo(tx(0),ty(data[0].v));
+  for(var i=1;i<data.length;i++){var m=(tx(i-1)+tx(i))/2; ctx.bezierCurveTo(m,ty(data[i-1].v),m,ty(data[i].v),tx(i),ty(data[i].v));}
+  ctx.lineTo(tx(data.length-1),P.t+cH); ctx.lineTo(P.l,P.t+cH); ctx.closePath(); ctx.fillStyle=gr; ctx.fill();
+
+  // Line
+  var lg=ctx.createLinearGradient(P.l,0,P.l+cW,0);
+  lg.addColorStop(0,'#4fc3f7'); lg.addColorStop(.5,'#81d4fa'); lg.addColorStop(1,'#4fc3f7');
+  ctx.beginPath(); ctx.moveTo(tx(0),ty(data[0].v));
+  for(var i=1;i<data.length;i++){var m=(tx(i-1)+tx(i))/2; ctx.bezierCurveTo(m,ty(data[i-1].v),m,ty(data[i].v),tx(i),ty(data[i].v));}
+  ctx.strokeStyle=lg; ctx.lineWidth=2.5; ctx.stroke();
+
+  // NOW line
+  if(view==='24h'){
+    var now=new Date(), ch=now.getHours()+now.getMinutes()/60;
+    var cx=P.l+(ch/Math.min(data.length-1,23))*cW;
+    ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,215,0,.65)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(cx,P.t); ctx.lineTo(cx,P.t+cH); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Space Mono'; ctx.fillText('NOW',cx+3,P.t+10);
+  }
+
+  // Y labels
+  ctx.fillStyle='rgba(127,179,211,.6)'; ctx.font='9px Space Mono';
+  for(var g=0;g<=4;g++){ctx.textAlign='right'; ctx.fillText((mn+(g/4)*rng).toFixed(1),P.l-4,P.t+cH-(g/4)*cH+3);}
+
+  // X labels
+  var lc=Math.min(data.length-1,view==='24h'?7:6);
+  for(var i=0;i<=lc;i++){
+    var idx=Math.round((i/lc)*(data.length-1));
+    ctx.textAlign='center';
+    var lbl;
+    if(view==='24h'){
+      var h=data[idx].hour||0;
+      lbl=(h===0?'12AM':h<12?h+'AM':h===12?'12PM':(h-12)+'PM');
+    } else {
+      lbl='D'+(Math.floor(idx/24)+1);
+    }
+    ctx.fillText(lbl,tx(idx),H-8);
+  }
+}
+
+// ── RENDER EVERYTHING ──
+async function loadAll(){
+  var stationId = document.getElementById('stSel').value;
+  var dateInput = document.getElementById('dtSel').value;
+  var view      = document.getElementById('vwSel').value;
+  var units     = document.getElementById('unSel').value;
+  var station   = STATIONS[stationId];
+
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('errBar').classList.remove('show');
+  document.getElementById('mainContent').style.opacity='0.4';
+
+  // Build date string for NOAA (YYYYMMDD)
+  var dateParts = dateInput.split('-');
+  var noaaDate  = dateParts[0]+dateParts[1]+dateParts[2];
+
+  var datum = 'MLLW';
+  var unitLabel = units;
+
+  try{
+    // Parallel fetches
+    var [hiloRaw, hourlyRaw, weather, marine, observed] = await Promise.all([
+      fetchNoaaTides(stationId, noaaDate, datum, units),
+      fetchNoaaHourly(stationId, noaaDate, datum, units),
+      fetchWeather(station.lat, station.lon),
+      fetchMarine(station.lat, station.lon),
+      fetchNoaaObserved(stationId, datum, units)
+    ]);
+
+    // ── TIDE DATA ──
+    // Hourly tide heights for chart
+    var chartData = hourlyRaw.slice(0, view==='7d'?168:24).map((p,i)=>{
+      var d=new Date(p.t);
+      return {v:parseFloat(p.v), hour:d.getHours(), label:p.t};
+    });
+
+    // Status cards from hourly
+    var allH = chartData.map(d=>d.v);
+    var maxH = Math.max(...allH).toFixed(2);
+    var minH = Math.min(...allH).toFixed(2);
+    var meanH = (allH.reduce((a,b)=>a+b,0)/allH.length).toFixed(2);
+    var range = (maxH-minH).toFixed(2);
+
+    var nowHour = new Date().getHours();
+    var hiloToday = hiloRaw.filter(p=>{
+      var d=new Date(p.t);
+      var sel=new Date(dateInput);
+      return d.getDate()===sel.getDate()&&d.getMonth()===sel.getMonth();
+    });
+    var futureHL = hiloRaw.filter(p=>{
+      var d=new Date(p.t);
+      return d>new Date();
+    });
+    var nextHi = futureHL.find(p=>p.type==='H');
+    var nextLo = futureHL.find(p=>p.type==='L');
+
+    // Status bar
+    var u=units;
+    document.getElementById('sBar').innerHTML =
+      sc('sv-hi','Max High',maxH,u+' MLLW')+
+      sc('sv-lo','Min Low',minH,u+' MLLW')+
+      sc('','Tidal Range',range,u)+
+      sc('','Mean Level',meanH,u+' MSL')+
+      (nextHi?sc('sv-hi','Next High',parseFloat(nextHi.v).toFixed(2),fmtTime(nextHi.t)):'')+
+      (nextLo?sc('sv-lo','Next Low',parseFloat(nextLo.v).toFixed(2),fmtTime(nextLo.t)):'');
+
+    // Current tide
+    var curH, curRising, curLabel;
+    if(observed){
+      curH = observed.v.toFixed(2);
+      var idx = chartData.findIndex(d=>d.label>=observed.t);
+      curRising = idx>0&&idx<chartData.length-1 ? chartData[idx+1].v>chartData[idx].v : null;
+      curLabel = '⚡ Observed: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
+    } else {
+      var nowIdx = Math.min(nowHour, chartData.length-1);
+      curH = (chartData[nowIdx]||{v:'—'}).v;
+      curRising = nowIdx<chartData.length-1 ? chartData[nowIdx+1].v>chartData[nowIdx].v : null;
+      curLabel = 'Predicted: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
+    }
+    document.getElementById('curTxt').innerHTML =
+      curLabel +
+      (curRising!==null?' &nbsp;·&nbsp; '+(curRising?'📈 Rising':'📉 Falling'):'')+
+      ' &nbsp;·&nbsp; <span style="color:#ffd700">'+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</span>';
+
+    // Chart
+    document.getElementById('ctit').textContent = view==='24h'?'24-Hour Tide Forecast':'7-Day Tide Outlook';
+    drawChart(chartData, u, view);
+
+    // Tide table
+    var tableRows = hiloRaw.slice(0,14).map(p=>{
+      var d=new Date(p.t);
+      var today=new Date(); var tomorrow=new Date(); tomorrow.setDate(today.getDate()+1);
+      var dayLabel = d.toDateString()===today.toDateString()?'Today':d.toDateString()===tomorrow.toDateString()?'Tomorrow':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      var hi=p.type==='H';
+      return '<tr><td>'+fmtTime(p.t)+'</td><td><span class="'+(hi?'bh':'bl')+'">'+(hi?'HIGH':'LOW')+'</span></td>'+
+        '<td style="color:'+(hi?'#4fc3f7':'#e8d5a3')+';font-weight:700">'+parseFloat(p.v).toFixed(2)+' '+u+'</td>'+
+        '<td style="color:rgba(127,179,211,.7)">'+dayLabel+'</td></tr>';
+    }).join('');
+    document.getElementById('tBody').innerHTML = tableRows;
+
+    // Moon
+    var mp=moonPhase();
+    document.getElementById('mIco').textContent=mp.i;
+    document.getElementById('mTxt').textContent=mp.t;
+
+    // ── WEATHER & MARINE ──
+    var wCur = weather.current;
+    var mCur = marine.current;
+    var wHourly = weather.hourly;
+    var mHourly = marine.hourly;
+
+    var windSpeed = Math.round(wCur.wind_speed_10m);
+    var windDir   = Math.round(wCur.wind_direction_10m);
+    var windGust  = wCur.wind_gusts_10m ? Math.round(wCur.wind_gusts_10m) : null;
+    var waveH     = mCur.wave_height!=null ? +mCur.wave_height.toFixed(1) : null;
+    var waveP     = mCur.wave_period!=null ? Math.round(mCur.wave_period) : null;
+    var waveDir   = mCur.wave_direction!=null ? Math.round(mCur.wave_direction) : null;
+    var sst       = mCur.sea_surface_temperature!=null ? Math.round(mCur.sea_surface_temperature) : null;
+    var airTemp   = Math.round(wCur.temperature_2m);
+    var cloud     = Math.round(wCur.cloud_cover);
+    var humidity  = Math.round(wCur.relative_humidity_2m);
+    var pressure  = Math.round(wCur.pressure_msl);
+    var uv        = Math.round(wCur.uv_index);
+    var vis       = wCur.visibility!=null ? +(wCur.visibility/1609.34).toFixed(1) : null; // m→mi
+
+    // Find swell dir from hourly (first available hour)
+    var nowIso = new Date().toISOString().slice(0,13);
+    var swellIdx = mHourly.time.findIndex(t=>t.startsWith(nowIso));
+    if(swellIdx<0) swellIdx=0;
+    var swellDir = mHourly.swell_wave_direction ? mHourly.swell_wave_direction[swellIdx] : waveDir;
+    var swellH   = mHourly.swell_wave_height ? +mHourly.swell_wave_height[swellIdx].toFixed(1) : null;
+
+    var surf  = deriveSurface(windSpeed, waveH||0);
+    var cross = deriveCrossChop(windDir, swellDir||windDir, windSpeed);
+    var wdir  = windDirLabel(windDir);
+
+    // Pressure trend
+    var p2Idx = Math.min(swellIdx+2, wHourly.pressure_msl.length-1);
+    var p2 = wHourly.pressure_msl[p2Idx];
+    var pTrend = p2>pressure+0.5?'↑ Rising':p2<pressure-0.5?'↓ Falling':'→ Steady';
+
+    // Sky icon
+    var skyIco, skyDesc;
+    if(cloud<15){skyIco='☀️';skyDesc='Clear';}
+    else if(cloud<30){skyIco='🌤️';skyDesc='Mostly Clear';}
+    else if(cloud<55){skyIco='⛅';skyDesc='Partly Cloudy';}
+    else if(cloud<80){skyIco='🌥️';skyDesc='Mostly Cloudy';}
+    else{skyIco='☁️';skyDesc='Overcast';}
+
+    var uvColor = uv>=8?'#ff8a65':uv>=5?'#ffd700':'#a5d6a7';
+    var uvLabel = uv>=8?'Very High':uv>=5?'Moderate':'Low';
+    var sstColor = sst>=80?'th':sst>=74?'tw':'tc';
+
+    // Compass needle
+    var ndStyle = `position:absolute;top:3px;left:50%;width:2px;height:11px;margin-left:-1px;border-radius:1px;background:linear-gradient(to bottom,#ff6b6b 50%,#4fc3f7 50%);transform-origin:bottom center;transform:translateX(-50%) rotate(${windDir}deg)`;
+
+    // Boating score
+    var bs = calcBoatScore(windSpeed, waveH||0, surf, cross, sst||75, cloud);
+    document.getElementById('snum').innerHTML = bs.score+'<span>/10</span>';
+    document.getElementById('snum').style.color = bs.col;
+    document.getElementById('stbar').style.background = bs.col;
+    document.getElementById('sverd').textContent = bs.v;
+    var sf=document.getElementById('sfill');
+    sf.style.width=(bs.score/10*100)+'%';
+    sf.style.background='linear-gradient(90deg,'+bs.col+'88,'+bs.col+')';
+    document.getElementById('facts').innerHTML = bs.facts.map(f=>`<div class="fc"><div class="fd" style="background:${f.col}"></div>${f.l}</div>`).join('');
+
+    // Conditions grid
+    document.getElementById('cgrid').innerHTML =
+      cc('💨','Wind Speed',`<div class="cv">${windSpeed} <span style="font-size:.82rem;color:var(--muted)">mph</span></div><div class="csub">${windGust?'Gusts to '+windGust+' mph':'No significant gusts'}</div>`)+
+      cc('🧭','Wind Dir',`<div class="cmpw"><div class="cmp"><div style="${ndStyle}"></div><div style="position:absolute;top:50%;left:50%;width:4px;height:4px;background:#fff;border-radius:50%;transform:translate(-50%,-50%)"></div></div><div><div class="cv" style="font-size:1rem">${wdir}</div><div class="csub">${windDir}°</div></div></div>`)+
+      cc('🌊','Wave Height',`<div class="cv">${waveH!=null?waveH:'—'} <span style="font-size:.82rem;color:var(--muted)">ft</span></div><div class="csub">${waveP?waveP+'s period':'—'}${swellH?'  ·  Swell '+swellH+'ft':''}</div>`)+
+      cc('🪟','Surface',`<div><span class="sg sg-${surf.cls}">${surf.label}</span></div><div><span class="cb ${cross?'cb-on':'cb-off'}">${cross?'⚡ Cross Chop ON':'✓ No Cross Chop'}</span></div>`)+
+      cc('🌡️','Water Temp',`<div class="cv ${sstColor}">${sst!=null?sst+'°':'—'} <span style="font-size:.82rem;color:var(--muted)">F</span></div><div class="csub">Air: ${airTemp}°F · Feels ${Math.round(wCur.apparent_temperature)}°F</div>`)+
+      cc(skyIco,'Sky',`<div class="cv" style="font-size:.9rem">${skyDesc}</div><div class="csub">${cloud}% cloud cover</div>`)+
+      cc('👁️','Visibility',`<div class="cv">${vis!=null?vis:'—'} <span style="font-size:.82rem;color:var(--muted)">mi</span></div><div class="csub">Humidity ${humidity}%</div>`)+
+      cc('☀️','UV Index',`<div class="cv" style="color:${uvColor}">${uv}</div><div class="csub">${uvLabel}</div>`)+
+      cc('📊','Pressure',`<div class="cv" style="font-size:.95rem">${pressure} <span style="font-size:.76rem;color:var(--muted)">hPa</span></div><div class="csub">${pTrend}</div>`);
+
+    // Hourly strip (next 12h)
+    var nowIsoH = new Date().toISOString().slice(0,13);
+    var hIdx = wHourly.time.findIndex(t=>t.startsWith(nowIsoH));
+    if(hIdx<0) hIdx=0;
+    var hHtml='';
+    var wIco=['☀️','🌤️','⛅','🌥️','☁️','🌦️'];
+    for(var i=0;i<12;i++){
+      var idx2 = hIdx+i;
+      if(idx2>=wHourly.time.length) break;
+      var hT = new Date(wHourly.time[idx2]);
+      var hh = hT.getHours();
+      var hlbl = i===0?'NOW':(hh===0?'12AM':hh<12?hh+'AM':hh===12?'12PM':(hh-12)+'PM');
+      var hWind = Math.round(wHourly.wind_speed_10m[idx2]);
+      var hCloud = wHourly.cloud_cover[idx2];
+      var hTemp = Math.round(wHourly.temperature_2m[idx2]);
+      var mHIdx = mHourly.time.findIndex(t=>t.startsWith(wHourly.time[idx2].slice(0,13)));
+      var hWave = mHIdx>=0&&mHourly.wave_height ? +mHourly.wave_height[mHIdx].toFixed(1) : '';
+      var hIco = wIco[Math.min(5,Math.floor(hCloud/18))];
+      hHtml+=`<div class="hb${i===0?' now':''}"><div class="ht">${hlbl}</div><div class="hi2">${hIco}</div><div class="htp">${hTemp}°</div><div class="hw">${hWind} mph</div>${hWave?'<div class="hw">'+hWave+'ft</div>':''}</div>`;
+    }
+    document.getElementById('hstrip').innerHTML = hHtml;
+
+    // Timestamp
+    document.getElementById('dataTs').textContent = 'Data fetched: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  } catch(err){
+    console.error(err);
+    document.getElementById('errBar').textContent = '⚠ Could not load live data: '+err.message+'. Check connection or CORS.';
+    document.getElementById('errBar').classList.add('show');
+  }
+
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('mainContent').style.opacity='1';
+}
+
+// ── HELPERS ──
+function sc(cls,label,val,unit){
+  return `<div class="sc"><div class="sl">${label}</div><div class="sv ${cls}">${val}</div><div class="su">${unit}</div></div>`;
+}
+function cc(ico,name,body){
+  return `<div class="cc"><span class="ci">${ico}</span><div class="cn">${name}</div>${body}</div>`;
+}
+
+// ── INIT ──
+var today = new Date().toISOString().split('T')[0];
+document.getElementById('dtSel').value = today;
+
+['stSel','dtSel','vwSel','unSel'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', loadAll);
+});
+document.getElementById('rfBtn').addEventListener('click', loadAll);
+window.addEventListener('resize', ()=>{setTimeout(loadAll,100);});
+setInterval(loadAll, 5*60*1000); // refresh every 5 min
+
+loadAll();
+</script>
+</body>
+</html>
