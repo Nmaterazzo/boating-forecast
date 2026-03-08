@@ -565,7 +565,8 @@ async function loadAll(){
     var waveH     = mCur.wave_height!=null ? +mCur.wave_height.toFixed(1) : null;
     var waveP     = mCur.wave_period!=null ? Math.round(mCur.wave_period) : null;
     var waveDir   = mCur.wave_direction!=null ? Math.round(mCur.wave_direction) : null;
-    var sst       = mCur.sea_surface_temperature!=null ? Math.round(mCur.sea_surface_temperature) : null;
+    // Marine API always returns SST in Celsius regardless of units param — convert to °F
+    var sst       = mCur.sea_surface_temperature!=null ? Math.round(mCur.sea_surface_temperature * 9/5 + 32) : null;
     var airTemp   = Math.round(wCur.temperature_2m);
     var cloud     = Math.round(wCur.cloud_cover);
     var humidity  = Math.round(wCur.relative_humidity_2m);
