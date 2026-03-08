@@ -766,6 +766,9 @@ async function loadAll(){
       var t = new Date(p.t).getTime();
       return t >= chartStart && t <= chartEnd;
     });
+    // Store args so resize can redraw without re-fetching
+    var cv = document.getElementById('cv');
+    cv._lastArgs = [chartData, u, view, hiloInRange, isSelectedToday];
     drawChart(chartData, u, view, hiloInRange, isSelectedToday);
 
     // Tide table
@@ -965,7 +968,16 @@ document.getElementById('dtSel').value = today;
   document.getElementById(id).addEventListener('change', loadAll);
 });
 document.getElementById('rfBtn').addEventListener('click', loadAll);
-window.addEventListener('resize', ()=>{setTimeout(loadAll,100);});
+// Only redraw chart on resize, never reload data
+var resizeTimer;
+window.addEventListener('resize', function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function(){
+    // Just redraw the canvas, don't re-fetch data
+    var cv = document.getElementById('cv');
+    if(cv && cv._lastArgs) drawChart.apply(null, cv._lastArgs);
+  }, 250);
+});
 setInterval(loadAll, 5*60*1000); // refresh every 5 min
 
 loadAll();
