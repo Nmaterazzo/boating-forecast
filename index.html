@@ -78,7 +78,7 @@ select option{background:#0a2340}
 /* ── CHART ── */
 .csec{padding:12px}
 .ctit{font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:var(--muted);margin-bottom:9px;text-align:center}
-.cwrap{position:relative;background:rgba(10,35,64,.6);border:1px solid var(--border);border-radius:12px;padding:12px 10px 40px;overflow:hidden}
+.cwrap{position:relative;background:rgba(10,35,64,.6);border:1px solid var(--border);border-radius:12px;padding:12px 10px 40px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 canvas{display:block;width:100%;height:240px}
 .shim{position:absolute;bottom:40px;left:10px;right:10px;height:28px;background:linear-gradient(90deg,transparent,rgba(79,195,247,.06),transparent);animation:sh 3.5s ease-in-out infinite;pointer-events:none}
 @keyframes sh{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
@@ -490,7 +490,10 @@ function calcBoatScore(ws, wvH, surf, cross, sst, cloud){
 function drawChart(data, unitLabel, view, hiloData, isToday){
   var cv=document.getElementById('cv');
   var dpr=window.devicePixelRatio||1;
-  var W=cv.parentElement.getBoundingClientRect().width-20, H=240;
+  // 7-day: use wider canvas so days have breathing room (100px per day, min container width)
+  var containerW = cv.parentElement.getBoundingClientRect().width-20;
+  var W = view==='7d' ? Math.max(containerW, 120*7) : containerW;
+  var H=240;
   cv.width=W*dpr; cv.height=H*dpr;
   cv.style.width=W+'px'; cv.style.height=H+'px';
   var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
