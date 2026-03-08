@@ -42,7 +42,7 @@ body{background:var(--sky1);color:var(--text);font-family:'Space Mono',monospace
 @keyframes wm2{0%{transform:translateX(-50%)}to{transform:translateX(0)}}
 @keyframes wm3{to{transform:translateX(-50%)}}
 .bird{position:absolute;top:14px;font-size:1.2rem;animation:fly 24s linear infinite}
-@keyframes fly{0%{left:3%;transform:scaleX(1)}48%{left:92%;transform:scaleX(1)}50%{left:92%;transform:scaleX(-1)}98%{left:3%;transform:scaleX(-1)}100%{left:3%;transform:scaleX(1)}}
+@keyframes fly{0%{left:3%;transform:scaleX(-1)}48%{left:92%;transform:scaleX(-1)}50%{left:92%;transform:scaleX(1)}98%{left:3%;transform:scaleX(1)}100%{left:3%;transform:scaleX(-1)}}
 
 /* ── CONTROLS ── */
 .ctrl{background:rgba(10,35,64,.98);border-bottom:1px solid var(--border);padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:flex-end}
@@ -497,7 +497,7 @@ function drawChart(data, unitLabel, view, hiloData, isToday){
   cv.width=W*dpr; cv.height=H*dpr;
   cv.style.width=W+'px'; cv.style.height=H+'px';
   var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
-  var P={t:14,r:12,b:36,l:44}, cW=W-P.l-P.r, cH=H-P.t-P.b;
+  var P={t:32,r:12,b:36,l:44}, cW=W-P.l-P.r, cH=H-P.t-P.b; // t:32 gives room for high tide labels
   var aH=data.map(d=>d.v);
   var mn=Math.min(...aH)-.15, mx=Math.max(...aH)+.15, rng=mx-mn;
   var tx=i=>P.l+(i/(data.length-1))*cW;
@@ -593,15 +593,18 @@ function drawChart(data, unitLabel, view, hiloData, isToday){
       });
     });
 
-    // Second pass: resolve label collisions
-    // Label block height is ~20px (time + height lines). Min horizontal gap before we nudge.
+    // Second pass: position labels
+    // High labels ALWAYS go above dot, low labels ALWAYS go below — never flip onto the wave line
     var LABEL_H = 22, MIN_X_GAP = 36;
-    markers.forEach(function(m, i){
-      m.labelY = m.hi ? m.y - 22 : m.y + 22;
-      // Boundary clamp: don't go above chart top or below chart bottom
-      if(m.labelY < P.t + 10) m.labelY = m.y + 22;
-      if(m.labelY > H - P.b - 6) m.labelY = m.y - 22;
-      m.labelX = m.x; // default centered on dot
+    markers.forEach(function(m){
+      if(m.hi){
+        // High: label above dot. If too close to top edge, push down but keep bg box so it's readable
+        m.labelY = Math.max(P.t + 20, m.y - 22);
+      } else {
+        // Low: label below dot. Clamp to bottom edge
+        m.labelY = Math.min(H - P.b - 6, m.y + 22);
+      }
+      m.labelX = m.x;
     });
 
     // Check each pair — if two labels are close in X and would overlap in Y, nudge X outward
@@ -649,14 +652,21 @@ function drawChart(data, unitLabel, view, hiloData, isToday){
         ctx.lineWidth=0.8; ctx.setLineDash([2,2]); ctx.stroke(); ctx.setLineDash([]);
       }
 
+      // Background pill behind label so it's always readable over the wave line
+      var bgTop = m.hi ? m.labelY - 12 : m.labelY - 12;
+      ctx.fillStyle = m.hi ? 'rgba(2,18,40,0.78)' : 'rgba(2,18,40,0.78)';
+      ctx.beginPath();
+      ctx.roundRect(m.labelX - 22, bgTop, 44, 22, 3);
+      ctx.fill();
+
       // Labels
       ctx.font='bold 8px Space Mono';
       ctx.fillStyle=col;
       ctx.textAlign='center';
       ctx.fillText(m.timeLbl, m.labelX, m.labelY);
       ctx.font='8px Space Mono';
-      ctx.fillStyle=m.hi?'rgba(79,195,247,.75)':'rgba(232,213,163,.75)';
-      ctx.fillText(m.heightLbl, m.labelX, m.labelY + (m.hi ? 10 : -10));
+      ctx.fillStyle=m.hi?'rgba(79,195,247,.85)':'rgba(232,213,163,.85)';
+      ctx.fillText(m.heightLbl, m.labelX, m.labelY + 10);
     });
   }
 }
