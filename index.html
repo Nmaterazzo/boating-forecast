@@ -898,11 +898,16 @@ async function loadAll(){
       var hCld2  = wI2>=0 ? wHourly.cloud_cover[wI2] : 0;
       var hIco = wIco[Math.min(5,Math.floor(hCld2/18))];
       var scoreColor = hs.score>=7.5?'#69f0ae':hs.score>=5.5?'#ffd700':hs.score>=3.5?'#ffb74d':'#ef9a9a';
+      var wI3 = wHourly.time.findIndex(t=>t.startsWith(selDatePrefix+'T'+String(hs.hour).padStart(2,'0')));
+      var hWindDir = wI3>=0 && wHourly.wind_direction_10m ? Math.round(wHourly.wind_direction_10m[wI3]) : 0;
       hHtml+='<div class="hb'+cls+'">'+
         '<div class="ht">'+topLbl+'</div>'+
         '<div class="hi2">'+hIco+'</div>'+
         '<div class="htp">'+hTemp2+'°</div>'+
-        '<div class="hw">'+hs.wind+' mph</div>'+
+        '<div class="hw" style="display:flex;align-items:center;justify-content:center;gap:2px">'+
+          '<span style="display:inline-block;transform:rotate('+hWindDir+'deg);font-size:.65rem;line-height:1">↑</span>'+
+          '<span>'+hs.wind+'</span>'+
+        '</div>'+
         (hs.wave?'<div class="hw">'+hs.wave+'ft</div>':'')+
         '<div class="hscore" style="color:'+scoreColor+'">'+hs.score+'</div>'+
         '</div>';
