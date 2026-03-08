@@ -729,23 +729,26 @@ async function loadAll(){
       (nextHi?sc('sv-hi','Next High',parseFloat(nextHi.v).toFixed(2),fmtTime(nextHi.t)):'')+
       (nextLo?sc('sv-lo','Next Low',parseFloat(nextLo.v).toFixed(2),fmtTime(nextLo.t)):'');
 
-    // Current tide
-    // Use current ET hour to find the right index — same anchor as the NOW line
+    // Current tide — always use predicted chart data (same source as chart)
     var curNowIdx = chartData.findIndex(function(d){ return d.hour === nowHour; });
     if(curNowIdx < 0) curNowIdx = Math.min(nowHour, chartData.length-1);
-    var curH, curRising, curLabel;
+    var prevIdx = Math.max(0, curNowIdx - 1);
+    var nextIdx = Math.min(chartData.length-1, curNowIdx + 1);
+    var curRising = chartData[nextIdx].v > chartData[prevIdx].v;
+    var curH, curLabel;
     if(observed){
-      curH = observed.v.toFixed(2);
-      // Rising/falling: compare the hour BEFORE and AFTER current ET hour on the chart
-      var prevIdx = Math.max(0, curNowIdx - 1);
-      var nextIdx = Math.min(chartData.length-1, curNowIdx + 1);
-      curRising = chartData[nextIdx].v > chartData[prevIdx].v;
-      curLabel = '⚡ Observed: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
+      // Show observed if it's close to predicted (within 0.5ft) — otherwise it's stale/bad data
+      var predicted = chartData[curNowIdx].v;
+      var diff = Math.abs(observed.v - predicted);
+      if(diff < 0.5){
+        curH = observed.v.toFixed(2);
+        curLabel = '⚡ Observed: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
+      } else {
+        curH = predicted.toFixed(2);
+        curLabel = 'Predicted: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
+      }
     } else {
-      curH = (chartData[curNowIdx]||{v:'—'}).v;
-      var prevIdx = Math.max(0, curNowIdx - 1);
-      var nextIdx = Math.min(chartData.length-1, curNowIdx + 1);
-      curRising = chartData[nextIdx].v > chartData[prevIdx].v;
+      curH = (chartData[curNowIdx]||{v:'—'}).v.toFixed(2);
       curLabel = 'Predicted: <strong style="color:#4fc3f7">'+curH+' '+u+'</strong>';
     }
     document.getElementById('curTxt').innerHTML =
