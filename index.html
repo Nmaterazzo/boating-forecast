@@ -315,6 +315,26 @@ function dayName(offset){
 }
 function toFt(m){return +(m*3.28084).toFixed(2);}
 
+// ── ET TIME HELPERS ──
+// The NOAA and Open-Meteo APIs return times as local ET strings like "2026-03-07T21:00"
+// with NO timezone suffix. We must always compare against ET local time, never UTC.
+// These helpers get the current ET date/hour as a plain string to match API formats.
+function nowET(){
+  // Returns current moment as ET local time Date object
+  return new Date(new Date().toLocaleString('en-US', {timeZone:'America/New_York'}));
+}
+function nowIsoET(){
+  // Returns "YYYY-MM-DDTHH" matching the API time format prefix
+  var d = nowET();
+  var yr = d.getFullYear();
+  var mo = String(d.getMonth()+1).padStart(2,'0');
+  var dy = String(d.getDate()).padStart(2,'0');
+  var hr = String(d.getHours()).padStart(2,'0');
+  return yr+'-'+mo+'-'+dy+'T'+hr;
+}
+function nowHourET(){ return nowET().getHours(); }
+function nowMinuteET(){ return nowET().getMinutes(); }
+
 // ── MOON PHASE (astronomical) ──
 function moonPhase(){
   var known=new Date('2000-01-06T18:14:00Z');
@@ -474,9 +494,9 @@ function drawChart(data, unitLabel, view, hiloData){
   for(var i=1;i<data.length;i++){var m=(tx(i-1)+tx(i))/2; ctx.bezierCurveTo(m,ty(data[i-1].v),m,ty(data[i].v),tx(i),ty(data[i].v));}
   ctx.strokeStyle=lg; ctx.lineWidth=2.5; ctx.stroke();
 
-  // NOW line
+  // NOW line — use ET local time to match NOAA's lst_ldt timestamps
   if(view==='24h'){
-    var now=new Date(), ch=now.getHours()+now.getMinutes()/60;
+    var ch=nowHourET()+nowMinuteET()/60;
     var cx=P.l+(ch/Math.min(data.length-1,23))*cW;
     ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,215,0,.65)'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(cx,P.t); ctx.lineTo(cx,P.t+cH); ctx.stroke(); ctx.setLineDash([]);
@@ -653,7 +673,7 @@ async function loadAll(){
     var meanH = (allH.reduce((a,b)=>a+b,0)/allH.length).toFixed(2);
     var range = (maxH-minH).toFixed(2);
 
-    var nowHour = new Date().getHours();
+    var nowHour = nowHourET();
     var hiloToday = hiloRaw.filter(p=>{
       var d=new Date(p.t);
       var sel=new Date(dateInput);
@@ -692,7 +712,7 @@ async function loadAll(){
     document.getElementById('curTxt').innerHTML =
       curLabel +
       (curRising!==null?' &nbsp;·&nbsp; '+(curRising?'📈 Rising':'📉 Falling'):'')+
-      ' &nbsp;·&nbsp; <span style="color:#ffd700">'+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</span>';
+      ' &nbsp;·&nbsp; <span style="color:#ffd700">'+nowET().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</span>';
 
     // Chart
     document.getElementById('ctit').textContent = view==='24h'?'24-Hour Tide Forecast':'7-Day Tide Outlook';
@@ -744,7 +764,7 @@ async function loadAll(){
     var vis       = wCur.visibility!=null ? +(wCur.visibility/1609.34).toFixed(1) : null; // m→mi
 
     // Find swell dir from hourly (first available hour)
-    var nowIso = new Date().toISOString().slice(0,13);
+    var nowIso = nowIsoET();
     var swellIdx = mHourly.time.findIndex(t=>t.startsWith(nowIso));
     if(swellIdx<0) swellIdx=0;
     var swellDir = mHourly.swell_wave_direction ? mHourly.swell_wave_direction[swellIdx] : waveDir;
@@ -798,7 +818,8 @@ async function loadAll(){
       cc('📊','Pressure',`<div class="cv" style="font-size:.95rem">${pressure} <span style="font-size:.76rem;color:var(--muted)">hPa</span></div><div class="csub">${pTrend}</div>`);
 
     // Hourly strip (next 12h)
-    var nowIsoH = new Date().toISOString().slice(0,13);
+    // API times are ET local strings like "2026-03-07T21:00" — match against ET "now"
+    var nowIsoH = nowIsoET(); // e.g. "2026-03-07T21"
     var hIdx = wHourly.time.findIndex(t=>t.startsWith(nowIsoH));
     if(hIdx<0) hIdx=0;
     var hHtml='';
@@ -806,8 +827,9 @@ async function loadAll(){
     for(var i=0;i<12;i++){
       var idx2 = hIdx+i;
       if(idx2>=wHourly.time.length) break;
-      var hT = new Date(wHourly.time[idx2]);
-      var hh = hT.getHours();
+      // Parse hour directly from the API time string (already ET local)
+      var apiTime = wHourly.time[idx2]; // "2026-03-07T21:00"
+      var hh = parseInt(apiTime.slice(11,13), 10);
       var hlbl = i===0?'NOW':(hh===0?'12AM':hh<12?hh+'AM':hh===12?'12PM':(hh-12)+'PM');
       var hWind = Math.round(wHourly.wind_speed_10m[idx2]);
       var hCloud = wHourly.cloud_cover[idx2];
@@ -820,7 +842,7 @@ async function loadAll(){
     document.getElementById('hstrip').innerHTML = hHtml;
 
     // Timestamp
-    document.getElementById('dataTs').textContent = 'Data fetched: '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('dataTs').textContent = 'Data fetched: '+nowET().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
   } catch(err){
     console.error(err);
