@@ -942,7 +942,7 @@ function cc(ico,name,body){
 }
 
 // ── INIT ──
-var today = new Date().toISOString().split('T')[0];
+var today = nowIsoET().slice(0,10); // use ET date, not UTC
 document.getElementById('dtSel').value = today;
 
 ['stSel','dtSel','vwSel','unSel'].forEach(id=>{
