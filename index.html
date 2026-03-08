@@ -494,13 +494,19 @@ function drawChart(data, unitLabel, view, hiloData){
   for(var i=1;i<data.length;i++){var m=(tx(i-1)+tx(i))/2; ctx.bezierCurveTo(m,ty(data[i-1].v),m,ty(data[i].v),tx(i),ty(data[i].v));}
   ctx.strokeStyle=lg; ctx.lineWidth=2.5; ctx.stroke();
 
-  // NOW line — use ET local time to match NOAA's lst_ldt timestamps
+  // NOW line — find position by matching current ET hour to the data array
   if(view==='24h'){
-    var ch=nowHourET()+nowMinuteET()/60;
-    var cx=P.l+(ch/Math.min(data.length-1,23))*cW;
-    ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,215,0,.65)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(cx,P.t); ctx.lineTo(cx,P.t+cH); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Space Mono'; ctx.fillText('NOW',cx+3,P.t+10);
+    var nowH = nowHourET(), nowM = nowMinuteET();
+    var nowIdx = data.findIndex(function(d){ return d.hour === nowH; });
+    if(nowIdx >= 0){
+      var fracInHour = nowM / 60;
+      var x0 = tx(nowIdx);
+      var x1 = nowIdx < data.length-1 ? tx(nowIdx+1) : x0;
+      var nowCx = x0 + (x1-x0)*fracInHour;
+      ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,215,0,.65)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(nowCx,P.t); ctx.lineTo(nowCx,P.t+cH); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#ffd700'; ctx.font='bold 9px Space Mono'; ctx.fillText('NOW',nowCx+3,P.t+10);
+    }
   }
 
   // Y labels
@@ -662,8 +668,9 @@ async function loadAll(){
     // ── TIDE DATA ──
     // Hourly tide heights for chart
     var chartData = hourlyRaw.slice(0, view==='7d'?168:24).map((p,i)=>{
-      var d=new Date(p.t);
-      return {v:parseFloat(p.v), hour:d.getHours(), label:p.t};
+      // Parse hour from ET local string directly (avoids UTC offset bug)
+      var hourFromStr = parseInt(p.t.replace(" ","T").slice(11,13), 10);
+      return {v:parseFloat(p.v), hour:hourFromStr, label:p.t};
     });
 
     // Status cards from hourly
