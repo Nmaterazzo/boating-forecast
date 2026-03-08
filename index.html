@@ -27,7 +27,7 @@ body{background:var(--sky1);color:var(--text);font-family:'Space Mono',monospace
 .hero-loc p{font-size:.55rem;color:var(--muted);letter-spacing:.28em;text-transform:uppercase;margin-top:4px}
 
 /* ── OCEAN STRIP ── */
-.ocean{position:relative;height:90px;background:linear-gradient(180deg,var(--ocean1),var(--ocean2));overflow:hidden}
+.ocean{position:relative;height:118px;background:linear-gradient(180deg,var(--ocean1),var(--ocean2));overflow:hidden}
 .wl{position:absolute;bottom:0;left:0;width:200%;height:62px}
 .w1{animation:wm1 6s linear infinite}
 .w2{animation:wm2 9s linear infinite;bottom:8px;opacity:.55}
@@ -148,48 +148,194 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
 
 <!-- OCEAN -->
 <div class="ocean">
-  <!-- Island with palm trees SVG -->
-  <svg class="island-scene" viewBox="0 0 320 90" preserveAspectRatio="xMidYMax meet" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:320px;height:90px;z-index:2;pointer-events:none">
-    <!-- Island mound -->
-    <ellipse cx="160" cy="82" rx="72" ry="14" fill="#c8a96e"/>
-    <ellipse cx="160" cy="78" rx="68" ry="11" fill="#d4b87a"/>
-    <!-- Sandy highlight -->
-    <ellipse cx="155" cy="74" rx="38" ry="5" fill="#e8cc96" opacity=".5"/>
-    <!-- Palm tree left -->
-    <line x1="130" y1="78" x2="122" y2="42" stroke="#7a5c2e" stroke-width="3" stroke-linecap="round"/>
-    <!-- Fronds left -->
-    <path d="M122,42 Q108,32 100,28" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M122,42 Q112,28 114,20" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M122,42 Q132,28 136,22" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M122,42 Q136,38 142,36" stroke="#43a047" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M122,42 Q108,40 102,40" stroke="#388e3c" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Realistic island with palm trees -->
+  <svg class="island-scene" viewBox="0 0 400 110" preserveAspectRatio="xMidYMax meet" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:420px;height:110px;z-index:2;pointer-events:none">
+    <defs>
+      <!-- Sand gradient -->
+      <radialGradient id="sandG" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#e8cc8a"/>
+        <stop offset="60%" stop-color="#d4aa62"/>
+        <stop offset="100%" stop-color="#b8903e"/>
+      </radialGradient>
+      <!-- Trunk gradient left tree -->
+      <linearGradient id="trunkL" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#5a3e1b"/>
+        <stop offset="40%" stop-color="#8b6535"/>
+        <stop offset="70%" stop-color="#a07840"/>
+        <stop offset="100%" stop-color="#6b4c22"/>
+      </linearGradient>
+      <!-- Trunk gradient center tree -->
+      <linearGradient id="trunkC" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#4e3518"/>
+        <stop offset="35%" stop-color="#7a5528"/>
+        <stop offset="65%" stop-color="#9a6e38"/>
+        <stop offset="100%" stop-color="#5e4020"/>
+      </linearGradient>
+      <!-- Trunk gradient right tree -->
+      <linearGradient id="trunkR" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#523a18"/>
+        <stop offset="40%" stop-color="#8a6030"/>
+        <stop offset="100%" stop-color="#634520"/>
+      </linearGradient>
+      <!-- Frond gradients -->
+      <linearGradient id="frondDark" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1b5e20"/>
+        <stop offset="100%" stop-color="#2e7d32"/>
+      </linearGradient>
+      <linearGradient id="frondMid" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#2e7d32"/>
+        <stop offset="100%" stop-color="#43a047"/>
+      </linearGradient>
+      <linearGradient id="frondLight" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#388e3c"/>
+        <stop offset="100%" stop-color="#66bb6a"/>
+      </linearGradient>
+      <!-- Water shimmer -->
+      <linearGradient id="waterShim" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#1565a0" stop-opacity="0"/>
+        <stop offset="30%" stop-color="#4fc3f7" stop-opacity="0.18"/>
+        <stop offset="50%" stop-color="#81d4fa" stop-opacity="0.25"/>
+        <stop offset="70%" stop-color="#4fc3f7" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#1565a0" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+
+    <!-- ── ISLAND BASE ── -->
+    <!-- Back shadow/depth -->
+    <ellipse cx="200" cy="103" rx="88" ry="10" fill="#7a6030" opacity="0.4"/>
+    <!-- Main sand body -->
+    <ellipse cx="200" cy="100" rx="84" ry="13" fill="url(#sandG)"/>
+    <!-- Sand surface highlight -->
+    <ellipse cx="192" cy="95" rx="52" ry="5.5" fill="#f0d896" opacity="0.45"/>
+    <!-- Wet sand edge -->
+    <ellipse cx="200" cy="108" rx="78" ry="5" fill="#c09840" opacity="0.5"/>
+    <!-- Small rocks/texture dots -->
+    <ellipse cx="168" cy="97" rx="3" ry="1.5" fill="#b89050" opacity="0.5"/>
+    <ellipse cx="230" cy="98" rx="2.5" ry="1.2" fill="#a07838" opacity="0.45"/>
+    <ellipse cx="215" cy="101" rx="2" ry="1" fill="#b89050" opacity="0.4"/>
+    <ellipse cx="178" cy="100" rx="1.8" ry="0.9" fill="#a07838" opacity="0.4"/>
+
+    <!-- ── LEFT PALM TREE (leaning left, shorter) ── -->
+    <!-- Trunk: thick segmented path leaning left -->
+    <path d="M148,99 C147,90 143,80 139,70 C136,62 133,54 131,46 C129,38 128,32 127,26"
+          stroke="url(#trunkL)" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+    <!-- Trunk segment rings (darker bands) -->
+    <path d="M146,93 Q140,93 138,92" stroke="#4a3010" stroke-width="1.2" fill="none" opacity="0.6"/>
+    <path d="M143,84 Q137,84 135,83" stroke="#4a3010" stroke-width="1.2" fill="none" opacity="0.6"/>
+    <path d="M140,75 Q134,75 132,74" stroke="#4a3010" stroke-width="1.2" fill="none" opacity="0.55"/>
+    <path d="M137,66 Q131,66 129,65" stroke="#4a3010" stroke-width="1.1" fill="none" opacity="0.5"/>
+    <path d="M134,57 Q129,57 127,56" stroke="#4a3010" stroke-width="1" fill="none" opacity="0.5"/>
+    <path d="M131,48 Q127,48 125,47" stroke="#4a3010" stroke-width="1" fill="none" opacity="0.45"/>
+    <!-- Fronds left tree — filled leaf shapes -->
+    <!-- Frond sweeping hard left -->
+    <path d="M127,26 C118,22 106,20 96,21 C100,25 112,26 120,28 Z" fill="url(#frondDark)"/>
+    <path d="M127,26 C120,18 110,12 100,10 C103,15 114,18 121,22 Z" fill="url(#frondMid)" opacity="0.85"/>
+    <!-- Frond up-left -->
+    <path d="M127,26 C122,18 118,10 116,3 C119,7 124,14 127,20 Z" fill="url(#frondLight)"/>
+    <path d="M127,26 C124,16 122,8 122,1 C124,5 126,13 127,19 Z" fill="url(#frondDark)" opacity="0.8"/>
+    <!-- Frond straight up -->
+    <path d="M127,26 C128,16 131,7 133,0 C131,5 129,13 128,20 Z" fill="url(#frondMid)"/>
+    <!-- Frond up-right -->
+    <path d="M127,26 C132,17 138,10 144,5 C140,10 134,17 130,22 Z" fill="url(#frondLight)"/>
+    <path d="M127,26 C133,19 140,13 148,9 C143,14 136,20 131,23 Z" fill="url(#frondDark)" opacity="0.75"/>
+    <!-- Frond drooping right -->
+    <path d="M127,26 C134,24 144,24 152,26 C146,26 136,25 130,26 Z" fill="url(#frondMid)" opacity="0.9"/>
+    <!-- Leaflet midribs -->
+    <path d="M127,26 C118,22 106,20 96,21" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <path d="M127,26 C122,18 116,10 116,3" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <path d="M127,26 C128,16 131,7 133,0" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <path d="M127,26 C132,17 138,10 144,5" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.7"/>
     <!-- Coconuts left -->
-    <circle cx="120" cy="43" r="2.5" fill="#c8860a"/>
-    <circle cx="124" cy="45" r="2" fill="#b8760a"/>
-    <!-- Palm tree right -->
-    <line x1="188" y1="78" x2="198" y2="40" stroke="#7a5c2e" stroke-width="3" stroke-linecap="round"/>
-    <!-- Fronds right -->
-    <path d="M198,40 Q214,30 222,26" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M198,40 Q208,26 206,18" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M198,40 Q188,26 184,20" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M198,40 Q184,36 178,34" stroke="#43a047" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M198,40 Q214,38 220,39" stroke="#388e3c" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <!-- Coconuts right -->
-    <circle cx="200" cy="41" r="2.5" fill="#c8860a"/>
-    <circle cx="196" cy="43" r="2" fill="#b8760a"/>
-    <!-- Center palm (taller) -->
-    <line x1="160" y1="78" x2="157" y2="32" stroke="#8b6535" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M157,32 Q140,20 132,15" stroke="#33691e" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M157,32 Q148,16 152,8" stroke="#388e3c" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M157,32 Q168,16 174,10" stroke="#33691e" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M157,32 Q172,26 178,24" stroke="#43a047" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M157,32 Q140,28 134,28" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="124" cy="28" r="3.2" fill="#8b5e1a"/>
+    <circle cx="129" cy="29.5" r="2.8" fill="#7a5015"/>
+    <circle cx="122" cy="31" r="2.4" fill="#9a6820"/>
+    <!-- Coconut highlights -->
+    <circle cx="123" cy="27" r="1" fill="#c48a30" opacity="0.5"/>
+    <circle cx="128" cy="28.5" r="0.9" fill="#c48a30" opacity="0.5"/>
+
+    <!-- ── CENTER PALM (tallest, slight right lean) ── -->
+    <path d="M200,100 C200,90 200,79 200,68 C200,57 201,46 202,36 C203,27 204,18 205,10"
+          stroke="url(#trunkC)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+    <!-- Trunk rings center -->
+    <path d="M200,92 Q206,92 208,91" stroke="#3e2808" stroke-width="1.3" fill="none" opacity="0.55"/>
+    <path d="M200,83 Q206,83 208,82" stroke="#3e2808" stroke-width="1.3" fill="none" opacity="0.55"/>
+    <path d="M200,74 Q206,74 208,73" stroke="#3e2808" stroke-width="1.2" fill="none" opacity="0.5"/>
+    <path d="M201,65 Q206,65 208,64" stroke="#3e2808" stroke-width="1.2" fill="none" opacity="0.5"/>
+    <path d="M201,56 Q206,56 208,55" stroke="#3e2808" stroke-width="1.1" fill="none" opacity="0.45"/>
+    <path d="M202,47 Q207,47 209,46" stroke="#3e2808" stroke-width="1.1" fill="none" opacity="0.45"/>
+    <path d="M203,38 Q207,38 209,37" stroke="#3e2808" stroke-width="1" fill="none" opacity="0.4"/>
+    <!-- Fronds center tree — bigger and more dramatic -->
+    <!-- Hard left sweep -->
+    <path d="M205,10 C194,5 178,3 164,5 C170,10 185,11 196,12 Z" fill="url(#frondDark)"/>
+    <path d="M205,10 C192,3 175,-2 161,0 C168,5 183,7 196,10 Z" fill="url(#frondMid)" opacity="0.8"/>
+    <!-- Up-left -->
+    <path d="M205,10 C198,2 192,-6 188,-12 C191,-6 198,1 203,7 Z" fill="url(#frondLight)"/>
+    <path d="M205,10 C199,0 195,-8 194,-15 C196,-8 201,0 204,7 Z" fill="url(#frondDark)" opacity="0.85"/>
+    <!-- Straight up -->
+    <path d="M205,10 C205,1 206,-8 207,-16 C206,-8 205,0 205,7 Z" fill="url(#frondMid)"/>
+    <path d="M205,10 C206,0 208,-9 211,-17 C209,-8 207,0 206,7 Z" fill="url(#frondLight)" opacity="0.9"/>
+    <!-- Up-right -->
+    <path d="M205,10 C212,2 218,-5 224,-10 C219,-4 213,3 208,8 Z" fill="url(#frondDark)"/>
+    <path d="M205,10 C213,4 221,-1 230,-4 C223,1 215,6 209,9 Z" fill="url(#frondMid)" opacity="0.85"/>
+    <!-- Right sweep -->
+    <path d="M205,10 C214,7 225,6 235,8 C227,9 216,9 208,11 Z" fill="url(#frondLight)"/>
+    <path d="M205,10 C215,9 228,10 238,14 C229,12 217,11 208,12 Z" fill="url(#frondDark)" opacity="0.7"/>
+    <!-- Midribs center -->
+    <path d="M205,10 C194,5 178,3 164,5" stroke="#1b5e20" stroke-width="0.9" fill="none" opacity="0.65"/>
+    <path d="M205,10 C198,2 192,-6 188,-12" stroke="#1b5e20" stroke-width="0.9" fill="none" opacity="0.65"/>
+    <path d="M205,10 C205,1 206,-8 207,-16" stroke="#1b5e20" stroke-width="0.9" fill="none" opacity="0.65"/>
+    <path d="M205,10 C212,2 218,-5 224,-10" stroke="#1b5e20" stroke-width="0.9" fill="none" opacity="0.65"/>
+    <path d="M205,10 C214,7 225,6 235,8" stroke="#1b5e20" stroke-width="0.9" fill="none" opacity="0.65"/>
     <!-- Coconuts center -->
-    <circle cx="155" cy="33" r="3" fill="#c8860a"/>
-    <circle cx="160" cy="35" r="2.5" fill="#b8760a"/>
-    <circle cx="152" cy="35" r="2" fill="#bf7d0a"/>
-    <!-- Water reflection shimmer -->
-    <ellipse cx="160" cy="88" rx="65" ry="4" fill="#1565a0" opacity=".6"/>
+    <circle cx="202" cy="13" r="3.8" fill="#8b5e1a"/>
+    <circle cx="208" cy="14.5" r="3.2" fill="#7a5015"/>
+    <circle cx="199" cy="15.5" r="2.8" fill="#9a6820"/>
+    <circle cx="205" cy="16" r="2.4" fill="#834e12"/>
+    <!-- Coconut sheen -->
+    <circle cx="201" cy="12" r="1.3" fill="#d4943a" opacity="0.45"/>
+    <circle cx="207" cy="13.5" r="1.1" fill="#d4943a" opacity="0.45"/>
+
+    <!-- ── RIGHT PALM (leaning right) ── -->
+    <path d="M252,98 C253,89 255,79 258,69 C261,59 264,50 266,41 C268,33 269,25 270,18"
+          stroke="url(#trunkR)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- Trunk rings right -->
+    <path d="M254,91 Q259,92 261,91" stroke="#3e2808" stroke-width="1.1" fill="none" opacity="0.55"/>
+    <path d="M256,82 Q261,83 263,82" stroke="#3e2808" stroke-width="1.1" fill="none" opacity="0.5"/>
+    <path d="M258,73 Q263,74 265,73" stroke="#3e2808" stroke-width="1" fill="none" opacity="0.5"/>
+    <path d="M261,64 Q265,65 267,64" stroke="#3e2808" stroke-width="1" fill="none" opacity="0.45"/>
+    <path d="M263,55 Q267,55 269,54" stroke="#3e2808" stroke-width="0.9" fill="none" opacity="0.45"/>
+    <path d="M265,46 Q269,46 271,45" stroke="#3e2808" stroke-width="0.9" fill="none" opacity="0.4"/>
+    <!-- Fronds right tree -->
+    <!-- Hard right sweep -->
+    <path d="M270,18 C280,13 294,11 306,12 C300,16 287,17 278,19 Z" fill="url(#frondDark)"/>
+    <path d="M270,18 C281,11 296,8 308,9 C301,14 287,16 278,18 Z" fill="url(#frondMid)" opacity="0.8"/>
+    <!-- Up-right -->
+    <path d="M270,18 C276,10 282,3 286,-3 C283,3 277,10 273,16 Z" fill="url(#frondLight)"/>
+    <path d="M270,18 C277,9 284,1 288,-5 C284,1 278,9 273,15 Z" fill="url(#frondDark)" opacity="0.8"/>
+    <!-- Straight up -->
+    <path d="M270,18 C269,9 268,1 268,-7 C269,1 269,9 270,14 Z" fill="url(#frondMid)"/>
+    <!-- Up-left -->
+    <path d="M270,18 C264,10 258,4 254,-1 C258,5 264,11 268,15 Z" fill="url(#frondLight)"/>
+    <path d="M270,18 C263,12 256,8 250,5 C256,9 263,13 268,16 Z" fill="url(#frondDark)" opacity="0.75"/>
+    <!-- Left droop -->
+    <path d="M270,18 C262,17 252,18 244,21 C251,20 261,18 268,18 Z" fill="url(#frondMid)" opacity="0.85"/>
+    <!-- Midribs right -->
+    <path d="M270,18 C280,13 294,11 306,12" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.65"/>
+    <path d="M270,18 C276,10 282,3 286,-3" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.65"/>
+    <path d="M270,18 C269,9 268,1 268,-7" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.65"/>
+    <path d="M270,18 C264,10 258,4 254,-1" stroke="#1b5e20" stroke-width="0.8" fill="none" opacity="0.65"/>
+    <!-- Coconuts right -->
+    <circle cx="267" cy="20" r="3" fill="#8b5e1a"/>
+    <circle cx="272" cy="21" r="2.6" fill="#7a5015"/>
+    <circle cx="265" cy="22.5" r="2.2" fill="#9a6820"/>
+    <!-- Coconut sheen -->
+    <circle cx="266" cy="19" r="1" fill="#d4943a" opacity="0.45"/>
+
+    <!-- ── WATER REFLECTION ── -->
+    <ellipse cx="200" cy="112" rx="82" ry="4.5" fill="url(#waterShim)"/>
+    <!-- Tiny reflection ripples -->
+    <path d="M155,109 Q175,107 195,109" stroke="#4fc3f7" stroke-width="0.6" fill="none" opacity="0.25"/>
+    <path d="M165,111 Q185,109 205,111" stroke="#4fc3f7" stroke-width="0.5" fill="none" opacity="0.2"/>
   </svg>
   <!-- Eagle flying -->
   <div class="bird">🦅</div>
@@ -508,9 +654,10 @@ function drawChart(data, unitLabel, view, hiloData){
 
   // Hi/Lo markers with times
   if(hiloData && hiloData.length){
+    // First pass: compute position for every marker
+    var markers = [];
     hiloData.forEach(function(hl){
       var hlDate=new Date(hl.t);
-      // Find closest data point
       var targetMs=hlDate.getTime();
       var bestIdx=0, bestDiff=Infinity;
       data.forEach(function(d,i){
@@ -518,32 +665,80 @@ function drawChart(data, unitLabel, view, hiloData){
         if(diff<bestDiff){bestDiff=diff;bestIdx=i;}
       });
       if(bestIdx<0||bestIdx>=data.length) return;
-      var x=tx(bestIdx), y=ty(data[bestIdx].v);
-      var hi=hl.type==='H';
-      var col=hi?'#4fc3f7':'#e8d5a3';
+      var hh=hlDate.getHours(), mm=hlDate.getMinutes();
+      markers.push({
+        x: tx(bestIdx),
+        y: ty(data[bestIdx].v),
+        hi: hl.type==='H',
+        timeLbl: (hh===0?'12':hh<=12?hh:hh-12)+':'+(mm<10?'0'+mm:mm)+(hh<12?'a':'p'),
+        heightLbl: parseFloat(hl.v).toFixed(1)+unitLabel
+      });
+    });
+
+    // Second pass: resolve label collisions
+    // Label block height is ~20px (time + height lines). Min horizontal gap before we nudge.
+    var LABEL_H = 22, MIN_X_GAP = 36;
+    markers.forEach(function(m, i){
+      m.labelY = m.hi ? m.y - 22 : m.y + 22;
+      // Boundary clamp: don't go above chart top or below chart bottom
+      if(m.labelY < P.t + 10) m.labelY = m.y + 22;
+      if(m.labelY > H - P.b - 6) m.labelY = m.y - 22;
+      m.labelX = m.x; // default centered on dot
+    });
+
+    // Check each pair — if two labels are close in X and would overlap in Y, nudge X outward
+    for(var i=0;i<markers.length;i++){
+      for(var j=i+1;j<markers.length;j++){
+        var a=markers[i], b=markers[j];
+        var dx=Math.abs(a.x - b.x);
+        var dyLabel=Math.abs(a.labelY - b.labelY);
+        if(dx < MIN_X_GAP && dyLabel < LABEL_H){
+          // Push them apart horizontally from their dot positions
+          var push = (MIN_X_GAP - dx) / 2 + 4;
+          if(a.x <= b.x){
+            a.labelX = a.x - push;
+            b.labelX = b.x + push;
+          } else {
+            a.labelX = a.x + push;
+            b.labelX = b.x - push;
+          }
+          // Clamp to chart bounds
+          a.labelX = Math.max(P.l + 16, Math.min(P.l + cW - 16, a.labelX));
+          b.labelX = Math.max(P.l + 16, Math.min(P.l + cW - 16, b.labelX));
+          // Draw a thin line from dot to nudged label so it stays readable
+          a.needsLeader = true;
+          b.needsLeader = true;
+        }
+      }
+    }
+
+    // Draw all markers
+    markers.forEach(function(m){
+      var col = m.hi ? '#4fc3f7' : '#e8d5a3';
 
       // Dot
-      ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+      ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI*2);
       ctx.fillStyle=col; ctx.fill();
-      ctx.strokeStyle=hi?'rgba(79,195,247,.3)':'rgba(232,213,163,.3)';
+      ctx.strokeStyle=m.hi?'rgba(79,195,247,.3)':'rgba(232,213,163,.3)';
       ctx.lineWidth=5; ctx.stroke(); ctx.lineWidth=1;
 
-      // Time label
-      var hh=hlDate.getHours(), mm=hlDate.getMinutes();
-      var timeLbl=(hh===0?'12':hh<=12?hh:hh-12)+':'+(mm<10?'0'+mm:mm)+(hh<12?'a':'p');
-      var heightLbl=parseFloat(hl.v).toFixed(1)+unitLabel;
+      // Leader line if label was nudged
+      if(m.needsLeader && Math.abs(m.labelX - m.x) > 3){
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.hi ? m.y - 6 : m.y + 6);
+        ctx.lineTo(m.labelX, m.hi ? m.labelY + 4 : m.labelY - 14);
+        ctx.strokeStyle = m.hi ? 'rgba(79,195,247,.35)' : 'rgba(232,213,163,.35)';
+        ctx.lineWidth=0.8; ctx.setLineDash([2,2]); ctx.stroke(); ctx.setLineDash([]);
+      }
 
+      // Labels
       ctx.font='bold 8px Space Mono';
       ctx.fillStyle=col;
       ctx.textAlign='center';
-      // Offset label above highs, below lows — with boundary clamping
-      var labelY = hi ? y-22 : y+22;
-      if(labelY < P.t+8) labelY = y+22;
-      if(labelY > H-P.b-4) labelY = y-22;
-      ctx.fillText(timeLbl, x, labelY);
+      ctx.fillText(m.timeLbl, m.labelX, m.labelY);
       ctx.font='8px Space Mono';
-      ctx.fillStyle=hi?'rgba(79,195,247,.75)':'rgba(232,213,163,.75)';
-      ctx.fillText(heightLbl, x, labelY+(hi?10:-10));
+      ctx.fillStyle=m.hi?'rgba(79,195,247,.75)':'rgba(232,213,163,.75)';
+      ctx.fillText(m.heightLbl, m.labelX, m.labelY + (m.hi ? 10 : -10));
     });
   }
 }
