@@ -391,15 +391,27 @@ async function fetchNoaaHourly(stationId, dateStr, datum, units, rangeDays){
 
 async function fetchNoaaObserved(stationId, datum, units){
   var u = units==='m'?'metric':'english';
-  var now = new Date();
-  var ds = now.getFullYear()+''+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
-  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=water_level&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&begin_date=${ds}&range=2`;
+  // Use ET date to avoid UTC rollover giving wrong date after 8pm ET
+  var etNow = nowET();
+  var ds = etNow.getFullYear()+''+String(etNow.getMonth()+1).padStart(2,'0')+String(etNow.getDate()).padStart(2,'0');
+  // range=1 fetches last 1 hour of 6-minute interval readings — most recent reading will be <6 min old
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=water_level&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&begin_date=${ds}&range=1`;
   try{
     var r = await fetch(url);
     var j = await r.json();
     if(j.data&&j.data.length>0){
-      var last = j.data[j.data.length-1];
-      return {v:parseFloat(last.v),t:last.t,observed:true};
+      // Find the reading closest to current ET time (not just last index)
+      var etStr = nowIsoET().replace('T',' '); // "2026-03-07 21" — match prefix
+      var best = j.data[j.data.length-1]; // default to last
+      var bestDiff = Infinity;
+      j.data.forEach(function(d){
+        // t is like "2026-03-07 21:42" — parse hours+minutes
+        var dh = parseInt(d.t.slice(11,13),10)*60 + parseInt(d.t.slice(14,16),10);
+        var nh = etNow.getHours()*60 + etNow.getMinutes();
+        var diff = Math.abs(dh - nh);
+        if(diff < bestDiff){ bestDiff=diff; best=d; }
+      });
+      return {v:parseFloat(best.v), t:best.t, observed:true};
     }
   }catch(e){}
   return null;
