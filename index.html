@@ -141,13 +141,57 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
 <div class="hero" id="sky">
   <div class="sun"></div>
   <div class="hero-loc">
-    <h1>Anclote Island</h1>
-    <p>Port Richey · Pasco County · Florida · Gulf Coast</p>
+    <h1 id="heroTitle">Anclote Island</h1>
+    <p id="heroSub">Port Richey · Pasco County · Florida · Gulf Coast</p>
   </div>
 </div>
 
 <!-- OCEAN -->
 <div class="ocean">
+  <!-- Island with palm trees SVG -->
+  <svg class="island-scene" viewBox="0 0 320 90" preserveAspectRatio="xMidYMax meet" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:320px;height:90px;z-index:2;pointer-events:none">
+    <!-- Island mound -->
+    <ellipse cx="160" cy="82" rx="72" ry="14" fill="#c8a96e"/>
+    <ellipse cx="160" cy="78" rx="68" ry="11" fill="#d4b87a"/>
+    <!-- Sandy highlight -->
+    <ellipse cx="155" cy="74" rx="38" ry="5" fill="#e8cc96" opacity=".5"/>
+    <!-- Palm tree left -->
+    <line x1="130" y1="78" x2="122" y2="42" stroke="#7a5c2e" stroke-width="3" stroke-linecap="round"/>
+    <!-- Fronds left -->
+    <path d="M122,42 Q108,32 100,28" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M122,42 Q112,28 114,20" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M122,42 Q132,28 136,22" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M122,42 Q136,38 142,36" stroke="#43a047" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M122,42 Q108,40 102,40" stroke="#388e3c" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Coconuts left -->
+    <circle cx="120" cy="43" r="2.5" fill="#c8860a"/>
+    <circle cx="124" cy="45" r="2" fill="#b8760a"/>
+    <!-- Palm tree right -->
+    <line x1="188" y1="78" x2="198" y2="40" stroke="#7a5c2e" stroke-width="3" stroke-linecap="round"/>
+    <!-- Fronds right -->
+    <path d="M198,40 Q214,30 222,26" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M198,40 Q208,26 206,18" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M198,40 Q188,26 184,20" stroke="#2e7d32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M198,40 Q184,36 178,34" stroke="#43a047" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M198,40 Q214,38 220,39" stroke="#388e3c" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Coconuts right -->
+    <circle cx="200" cy="41" r="2.5" fill="#c8860a"/>
+    <circle cx="196" cy="43" r="2" fill="#b8760a"/>
+    <!-- Center palm (taller) -->
+    <line x1="160" y1="78" x2="157" y2="32" stroke="#8b6535" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M157,32 Q140,20 132,15" stroke="#33691e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M157,32 Q148,16 152,8" stroke="#388e3c" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M157,32 Q168,16 174,10" stroke="#33691e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M157,32 Q172,26 178,24" stroke="#43a047" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M157,32 Q140,28 134,28" stroke="#388e3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Coconuts center -->
+    <circle cx="155" cy="33" r="3" fill="#c8860a"/>
+    <circle cx="160" cy="35" r="2.5" fill="#b8760a"/>
+    <circle cx="152" cy="35" r="2" fill="#bf7d0a"/>
+    <!-- Water reflection shimmer -->
+    <ellipse cx="160" cy="88" rx="65" ry="4" fill="#1565a0" opacity=".6"/>
+  </svg>
+  <!-- Eagle flying -->
   <div class="bird">🦅</div>
   <svg class="wl w1" viewBox="0 0 1440 65" preserveAspectRatio="none"><path d="M0,32 C180,8 360,58 540,32 C720,8 900,58 1080,32 C1260,8 1440,40 1440,40 L1440,65 L0,65Z" fill="#1565a0" opacity=".8"/><path d="M1440,32 C1260,8 1080,58 900,32 C720,8 540,58 360,32 C180,8 0,40 0,40 L0,65 L1440,65Z" fill="#0d3b6e" opacity=".5"/></svg>
   <svg class="wl w2" viewBox="0 0 1440 65" preserveAspectRatio="none"><path d="M0,42 C240,18 480,60 720,38 C960,18 1200,56 1440,38 L1440,65 L0,65Z" fill="#0a2340" opacity=".6"/></svg>
@@ -241,10 +285,10 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
 
 // ── STATION CONFIG ──
 var STATIONS = {
-  '8726520': {name:'Anclote Island',   lat:28.1725, lon:-82.8444},
-  '8726384': {name:'Port Richey',      lat:28.2711, lon:-82.7198},
-  '8726667': {name:'Tarpon Springs',   lat:28.1453, lon:-82.7556},
-  '8726607': {name:'New Port Richey',  lat:28.2436, lon:-82.7198}
+  '8726520': {name:'Anclote Island',  sub:'Port Richey · Pasco County · Florida · Gulf Coast',  lat:28.1725, lon:-82.8444},
+  '8726384': {name:'Port Richey',     sub:'Pasco County · Florida · Gulf Coast',                lat:28.2711, lon:-82.7198},
+  '8726667': {name:'Tarpon Springs',  sub:'Pinellas County · Florida · Gulf Coast',            lat:28.1453, lon:-82.7556},
+  '8726607': {name:'New Port Richey', sub:'Pasco County · Florida · Gulf Coast',               lat:28.2436, lon:-82.7198}
 };
 
 // ── UTILS ──
@@ -283,18 +327,20 @@ function moonPhase(){
 }
 
 // ── NOAA TIDES ──
-async function fetchNoaaTides(stationId, dateStr, datum, units){
+async function fetchNoaaTides(stationId, dateStr, datum, units, rangeDays){
   // Hi/Lo predictions
   var u = units==='m'?'metric':'english';
-  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=hilo&begin_date=${dateStr}&range=48`;
+  var rangeHrs = (rangeDays||2)*24;
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=hilo&begin_date=${dateStr}&range=${rangeHrs}`;
   var r = await fetch(url);
   var j = await r.json();
   return j.predictions||[];
 }
 
-async function fetchNoaaHourly(stationId, dateStr, datum, units){
+async function fetchNoaaHourly(stationId, dateStr, datum, units, rangeDays){
   var u = units==='m'?'metric':'english';
-  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=h&begin_date=${dateStr}&range=48`;
+  var rangeHrs = (rangeDays||2)*24;
+  var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=h&begin_date=${dateStr}&range=${rangeHrs}`;
   var r = await fetch(url);
   var j = await r.json();
   return j.predictions||[];
@@ -386,7 +432,7 @@ function calcBoatScore(ws, wvH, surf, cross, sst, cloud){
 }
 
 // ── DRAW CHART ──
-function drawChart(data, unitLabel, view){
+function drawChart(data, unitLabel, view, hiloData){
   var cv=document.getElementById('cv');
   var dpr=window.devicePixelRatio||1;
   var W=cv.parentElement.getBoundingClientRect().width-20, H=240;
@@ -432,19 +478,73 @@ function drawChart(data, unitLabel, view){
   ctx.fillStyle='rgba(127,179,211,.6)'; ctx.font='9px Space Mono';
   for(var g=0;g<=4;g++){ctx.textAlign='right'; ctx.fillText((mn+(g/4)*rng).toFixed(1),P.l-4,P.t+cH-(g/4)*cH+3);}
 
-  // X labels
-  var lc=Math.min(data.length-1,view==='24h'?7:6);
-  for(var i=0;i<=lc;i++){
-    var idx=Math.round((i/lc)*(data.length-1));
-    ctx.textAlign='center';
-    var lbl;
-    if(view==='24h'){
-      var h=data[idx].hour||0;
-      lbl=(h===0?'12AM':h<12?h+'AM':h===12?'12PM':(h-12)+'PM');
-    } else {
-      lbl='D'+(Math.floor(idx/24)+1);
+  // X labels - day markers for 7d, hour markers for 24h
+  ctx.fillStyle='rgba(127,179,211,.55)'; ctx.font='9px Space Mono';
+  if(view==='24h'){
+    var hours=[0,3,6,9,12,15,18,21,23];
+    hours.forEach(function(h){
+      var idx=data.findIndex(function(d){return d.hour===h;});
+      if(idx<0) return;
+      ctx.textAlign='center';
+      var lbl=h===0?'12AM':h<12?h+'AM':h===12?'12PM':(h-12)+'PM';
+      ctx.fillText(lbl,tx(idx),H-8);
+    });
+  } else {
+    // Draw day separator lines + day labels
+    for(var d=0;d<7;d++){
+      var idx=d*24;
+      if(idx>=data.length) break;
+      ctx.textAlign='center';
+      var dayDate=new Date(data[idx].label);
+      var dayLbl=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayDate.getDay()];
+      ctx.fillText(dayLbl,tx(Math.min(idx+12,data.length-1)),H-8);
+      if(d>0){
+        ctx.setLineDash([2,4]); ctx.strokeStyle='rgba(79,195,247,.18)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(tx(idx),P.t); ctx.lineTo(tx(idx),P.t+cH); ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
-    ctx.fillText(lbl,tx(idx),H-8);
+  }
+
+  // Hi/Lo markers with times
+  if(hiloData && hiloData.length){
+    hiloData.forEach(function(hl){
+      var hlDate=new Date(hl.t);
+      // Find closest data point
+      var targetMs=hlDate.getTime();
+      var bestIdx=0, bestDiff=Infinity;
+      data.forEach(function(d,i){
+        var diff=Math.abs(new Date(d.label).getTime()-targetMs);
+        if(diff<bestDiff){bestDiff=diff;bestIdx=i;}
+      });
+      if(bestIdx<0||bestIdx>=data.length) return;
+      var x=tx(bestIdx), y=ty(data[bestIdx].v);
+      var hi=hl.type==='H';
+      var col=hi?'#4fc3f7':'#e8d5a3';
+
+      // Dot
+      ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+      ctx.fillStyle=col; ctx.fill();
+      ctx.strokeStyle=hi?'rgba(79,195,247,.3)':'rgba(232,213,163,.3)';
+      ctx.lineWidth=5; ctx.stroke(); ctx.lineWidth=1;
+
+      // Time label
+      var hh=hlDate.getHours(), mm=hlDate.getMinutes();
+      var timeLbl=(hh===0?'12':hh<=12?hh:hh-12)+':'+(mm<10?'0'+mm:mm)+(hh<12?'a':'p');
+      var heightLbl=parseFloat(hl.v).toFixed(1)+unitLabel;
+
+      ctx.font='bold 8px Space Mono';
+      ctx.fillStyle=col;
+      ctx.textAlign='center';
+      // Offset label above highs, below lows — with boundary clamping
+      var labelY = hi ? y-22 : y+22;
+      if(labelY < P.t+8) labelY = y+22;
+      if(labelY > H-P.b-4) labelY = y-22;
+      ctx.fillText(timeLbl, x, labelY);
+      ctx.font='8px Space Mono';
+      ctx.fillStyle=hi?'rgba(79,195,247,.75)':'rgba(232,213,163,.75)';
+      ctx.fillText(heightLbl, x, labelY+(hi?10:-10));
+    });
   }
 }
 
@@ -456,6 +556,9 @@ async function loadAll(){
   var units     = document.getElementById('unSel').value;
   var station   = STATIONS[stationId];
 
+  // Update header title and subtitle
+  document.getElementById('heroTitle').textContent = station.name;
+  document.getElementById('heroSub').textContent = station.sub;
   document.getElementById('loading').classList.add('show');
   document.getElementById('errBar').classList.remove('show');
   document.getElementById('mainContent').style.opacity='0.4';
@@ -469,9 +572,10 @@ async function loadAll(){
 
   try{
     // Parallel fetches
+    var rangeDays = view==='7d' ? 7 : 2;
     var [hiloRaw, hourlyRaw, weather, marine, observed] = await Promise.all([
-      fetchNoaaTides(stationId, noaaDate, datum, units),
-      fetchNoaaHourly(stationId, noaaDate, datum, units),
+      fetchNoaaTides(stationId, noaaDate, datum, units, rangeDays),
+      fetchNoaaHourly(stationId, noaaDate, datum, units, rangeDays),
       fetchWeather(station.lat, station.lon),
       fetchMarine(station.lat, station.lon),
       fetchNoaaObserved(stationId, datum, units)
@@ -534,10 +638,10 @@ async function loadAll(){
 
     // Chart
     document.getElementById('ctit').textContent = view==='24h'?'24-Hour Tide Forecast':'7-Day Tide Outlook';
-    drawChart(chartData, u, view);
+    drawChart(chartData, u, view, hiloRaw);
 
     // Tide table
-    var tableRows = hiloRaw.slice(0,14).map(p=>{
+    var tableRows = hiloRaw.map(p=>{
       var d=new Date(p.t);
       var today=new Date(); var tomorrow=new Date(); tomorrow.setDate(today.getDate()+1);
       var dayLabel = d.toDateString()===today.toDateString()?'Today':d.toDateString()===tomorrow.toDateString()?'Tomorrow':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
