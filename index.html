@@ -942,7 +942,7 @@ async function loadAll(){
         '<div class="hi2">'+hIco+'</div>'+
         '<div class="htp">'+hTemp2+'°</div>'+
         '<div class="hw" style="display:flex;align-items:center;justify-content:center;gap:2px">'+
-          '<span style="display:inline-block;transform:rotate('+hWindDir+'deg);font-size:.65rem;line-height:1">↑</span>'+
+          '<span style="display:inline-block;transform:rotate('+(hWindDir+180)+'deg);font-size:.65rem;line-height:1">↑</span>'+
           '<span>'+hs.wind+'</span>'+
         '</div>'+
         (hs.wave?'<div class="hw">'+hs.wave+'ft</div>':'')+
