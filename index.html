@@ -222,7 +222,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(79,195,247,.07)}
   <div class="cg">
     <span class="cl">Station</span>
     <select id="stSel">
-      <option value="8726520">Anclote Island, FL</option>
+      <option value="8726520">Anclote Island, FL</option>  <!-- tide data via Port Richey -->
       <option value="8726384">Port Richey, FL</option>
       <option value="8726667">Tarpon Springs, FL</option>
       <option value="8726607">New Port Richey, FL</option>
@@ -312,6 +312,21 @@ var STATIONS = {
   '8726384': {name:'Port Richey',     sub:'Pasco County · Florida · Gulf Coast',                lat:28.2711, lon:-82.7198},
   '8726667': {name:'Tarpon Springs',  sub:'Pinellas County · Florida · Gulf Coast',            lat:28.1453, lon:-82.7556},
   '8726607': {name:'New Port Richey', sub:'Pasco County · Florida · Gulf Coast',               lat:28.2436, lon:-82.7198}
+};
+// Anclote Island is a subordinate station with poor harmonic data — use Port Richey (8726384)
+// as the tide prediction source but keep Anclote's lat/lon for weather/marine data
+var TIDE_STATION_OVERRIDE = {
+  '8726520': '8726667',  // Anclote Island → use Tarpon Springs
+  '8726384': '8726667',  // Port Richey → use Tarpon Springs
+  '8726607': '8726667'   // New Port Richey → use Tarpon Springs
+};
+// Time correction in minutes to apply to hi/lo tide times after fetching
+// Anclote Island runs ~130 min ahead of Tarpon Springs NOAA predictions
+var TIDE_TIME_OFFSET_MINS = {
+  '8726520': -130,
+  '8726384': -130,
+  '8726607': -130,
+  '8726667': 0
 };
 
 // ── UTILS ──
@@ -706,13 +721,34 @@ async function loadAll(){
   try{
     // Parallel fetches
     var rangeDays = view==='7d' ? 7 : 2;
+    // Use tide station override if defined (e.g. Anclote Island → Port Richey for better data)
+    var tideStationId = TIDE_STATION_OVERRIDE[stationId] || stationId;
     var [hiloRaw, hourlyRaw, weather, marine, observed] = await Promise.all([
-      fetchNoaaTides(stationId, noaaDate, datum, units, rangeDays),
-      fetchNoaaHourly(stationId, noaaDate, datum, units, rangeDays),
+      fetchNoaaTides(tideStationId, noaaDate, datum, units, rangeDays),
+      fetchNoaaHourly(tideStationId, noaaDate, datum, units, rangeDays),
       fetchWeather(station.lat, station.lon),
       fetchMarine(station.lat, station.lon),
-      fetchNoaaObserved(stationId, datum, units)
+      fetchNoaaObserved(tideStationId, datum, units)
     ]);
+
+    // ── APPLY TIDE TIME OFFSET ──
+    var offsetMins = TIDE_TIME_OFFSET_MINS[stationId] || 0;
+    if(offsetMins !== 0){
+      function applyOffset(predictions){
+        return predictions.map(function(p){
+          // Parse the time string, add offset, reformat
+          var s = p.t.replace(' ','T');
+          // Treat as local time by appending a fake UTC offset so Date parses it correctly
+          var ms = new Date(s + ':00').getTime() + offsetMins * 60000;
+          var d = new Date(ms);
+          var pad = function(n){ return String(n).padStart(2,'0'); };
+          var newT = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+          return Object.assign({}, p, {t: newT});
+        });
+      }
+      hiloRaw = applyOffset(hiloRaw);
+      hourlyRaw = applyOffset(hourlyRaw);
+    }
 
     // ── TIDE DATA ──
     // Hourly tide heights for chart
