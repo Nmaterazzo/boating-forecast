@@ -315,12 +315,15 @@ var STATIONS = {
 };
 // Anclote Island is a subordinate station with poor harmonic data — use Port Richey (8726384)
 // as the tide prediction source but keep Anclote's lat/lon for weather/marine data
+// Hi/Lo tide station IDs — each station has accurate hi/lo predictions
 var TIDE_STATION_OVERRIDE = {
-  '8726520': '8726917',  // Anclote Island → 8726917
-  '8726384': '8727012',  // Port Richey → 8727012
-  '8726607': '8726995',  // New Port Richey → 8726995
-  '8726667': '8726905'   // Tarpon Springs → 8726905
+  '8726520': '8726917',  // Anclote Island
+  '8726384': '8727012',  // Port Richey
+  '8726607': '8726995',  // New Port Richey
+  '8726667': '8726905'   // Tarpon Springs
 };
+// Stations that only have hi/lo data — hourly will be interpolated
+var HILO_ONLY_STATIONS = ['8727012','8726995','8726905'];
 
 // ── UTILS ──
 function fmtTime(iso){
@@ -714,23 +717,72 @@ async function loadAll(){
   try{
     // Parallel fetches
     var rangeDays = view==='7d' ? 7 : 2;
-    // Use tide station override if defined (e.g. Anclote Island → Port Richey for better data)
     var tideStationId = TIDE_STATION_OVERRIDE[stationId] || stationId;
+    var isHiloOnly = HILO_ONLY_STATIONS.indexOf(tideStationId) >= 0;
     var [hiloRaw, hourlyRaw, weather, marine, observed] = await Promise.all([
       fetchNoaaTides(tideStationId, noaaDate, datum, units, rangeDays),
-      fetchNoaaHourly(tideStationId, noaaDate, datum, units, rangeDays),
+      isHiloOnly ? Promise.resolve([]) : fetchNoaaHourly(tideStationId, noaaDate, datum, units, rangeDays),
       fetchWeather(station.lat, station.lon),
       fetchMarine(station.lat, station.lon),
       fetchNoaaObserved(tideStationId, datum, units)
     ]);
 
-        // ── TIDE DATA ──
+    // ── TIDE DATA ──
+    // If hourly predictions are unavailable (subordinate stations), interpolate from hi/lo
+    if(hourlyRaw.length === 0 && hiloRaw.length > 0){
+      // Build synthetic hourly data by sinusoidal interpolation between hi/lo points
+      var hoursNeeded = view==='7d' ? 168 : 24;
+      var synth = [];
+      // Extend hiloRaw with a preceding point for interpolation
+      var pts = hiloRaw.map(function(p){
+        var s = p.t.replace(' ','T');
+        var hh = parseInt(s.slice(11,13),10), mm = parseInt(s.slice(14,16),10);
+        // Build absolute minute offset from start of selected date
+        var dateMs = new Date(dateInput+'T00:00:00').getTime();
+        var ptMs = new Date(dateInput+'T'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':00').getTime();
+        // Handle times that belong to next day
+        var offsetMs = ptMs - dateMs;
+        return {minutesFromStart: offsetMs/60000, v: parseFloat(p.v), t: p.t};
+      });
+      for(var hr=0; hr<hoursNeeded; hr++){
+        var minNow = hr*60;
+        // Find surrounding hi/lo points
+        var before = null, after = null;
+        for(var pi=0; pi<pts.length; pi++){
+          if(pts[pi].minutesFromStart <= minNow) before = pts[pi];
+          if(pts[pi].minutesFromStart > minNow && !after) after = pts[pi];
+        }
+        var v;
+        if(before && after){
+          // Cosine interpolation between tide extremes
+          var span = after.minutesFromStart - before.minutesFromStart;
+          var frac = (minNow - before.minutesFromStart) / span;
+          v = before.v + (after.v - before.v) * (1 - Math.cos(frac * Math.PI)) / 2;
+        } else if(before){
+          v = before.v;
+        } else if(after){
+          v = after.v;
+        } else {
+          v = 0;
+        }
+        // Build time string for this hour
+        var hrDate = new Date(new Date(dateInput+'T00:00:00').getTime() + hr*3600000);
+        var pad = function(n){ return String(n).padStart(2,'0'); };
+        var tStr = hrDate.getFullYear()+'-'+pad(hrDate.getMonth()+1)+'-'+pad(hrDate.getDate())+' '+pad(hrDate.getHours())+':00';
+        synth.push({t: tStr, v: v.toFixed(3)});
+      }
+      hourlyRaw = synth;
+    }
+
     // Hourly tide heights for chart
     var chartData = hourlyRaw.slice(0, view==='7d'?168:24).map((p,i)=>{
       // Parse hour from ET local string directly (avoids UTC offset bug)
       var hourFromStr = parseInt(p.t.replace(" ","T").slice(11,13), 10);
       return {v:parseFloat(p.v), hour:hourFromStr, label:p.t};
     });
+    if(chartData.length === 0){
+      throw new Error('No tide data available for this station/date.');
+    }
 
     // Status cards from hourly
     var allH = chartData.map(d=>d.v);
