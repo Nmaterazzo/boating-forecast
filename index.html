@@ -728,46 +728,45 @@ async function loadAll(){
     ]);
 
     // ── TIDE DATA ──
-    // If hourly predictions are unavailable (subordinate stations), interpolate from hi/lo
+    // If hourly predictions unavailable (subordinate stations), interpolate from hi/lo
     if(hourlyRaw.length === 0 && hiloRaw.length > 0){
-      // Build synthetic hourly data by sinusoidal interpolation between hi/lo points
       var hoursNeeded = view==='7d' ? 168 : 24;
       var synth = [];
-      // Extend hiloRaw with a preceding point for interpolation
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      var startMs = new Date(dateInput+'T00:00:00').getTime();
+
+      // Convert each hi/lo point to ms timestamp by parsing string directly
+      // "YYYY-MM-DD HH:MM" — treat as local time by using noon offset trick
       var pts = hiloRaw.map(function(p){
         var s = p.t.replace(' ','T');
-        var hh = parseInt(s.slice(11,13),10), mm = parseInt(s.slice(14,16),10);
-        // Build absolute minute offset from start of selected date
-        var dateMs = new Date(dateInput+'T00:00:00').getTime();
-        var ptMs = new Date(dateInput+'T'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':00').getTime();
-        // Handle times that belong to next day
-        var offsetMs = ptMs - dateMs;
-        return {minutesFromStart: offsetMs/60000, v: parseFloat(p.v), t: p.t};
+        var yr = parseInt(s.slice(0,4),10), mo = parseInt(s.slice(5,7),10)-1;
+        var dy = parseInt(s.slice(8,10),10), hh = parseInt(s.slice(11,13),10);
+        var mm = parseInt(s.slice(14,16),10);
+        // Build ms from epoch using Date.UTC then adjust for ET offset (-4 or -5)
+        // Simpler: just compute offset in minutes from startMs using parsed values
+        var ptMs = new Date(yr,mo,dy,hh,mm,0).getTime();
+        return {ms: ptMs, v: parseFloat(p.v)};
       });
+
       for(var hr=0; hr<hoursNeeded; hr++){
-        var minNow = hr*60;
-        // Find surrounding hi/lo points
+        var hrMs = startMs + hr*3600000;
+        // Find surrounding hi/lo bracket
         var before = null, after = null;
         for(var pi=0; pi<pts.length; pi++){
-          if(pts[pi].minutesFromStart <= minNow) before = pts[pi];
-          if(pts[pi].minutesFromStart > minNow && !after) after = pts[pi];
+          if(pts[pi].ms <= hrMs) before = pts[pi];
+          if(pts[pi].ms > hrMs && !after) after = pts[pi];
         }
         var v;
         if(before && after){
-          // Cosine interpolation between tide extremes
-          var span = after.minutesFromStart - before.minutesFromStart;
-          var frac = (minNow - before.minutesFromStart) / span;
+          var span = after.ms - before.ms;
+          var frac = (hrMs - before.ms) / span;
+          // Cosine interpolation — natural tide curve shape
           v = before.v + (after.v - before.v) * (1 - Math.cos(frac * Math.PI)) / 2;
-        } else if(before){
-          v = before.v;
-        } else if(after){
-          v = after.v;
-        } else {
-          v = 0;
-        }
-        // Build time string for this hour
-        var hrDate = new Date(new Date(dateInput+'T00:00:00').getTime() + hr*3600000);
-        var pad = function(n){ return String(n).padStart(2,'0'); };
+        } else if(before){ v = before.v; }
+        else if(after)   { v = after.v;  }
+        else             { v = 0;        }
+
+        var hrDate = new Date(startMs + hr*3600000);
         var tStr = hrDate.getFullYear()+'-'+pad(hrDate.getMonth()+1)+'-'+pad(hrDate.getDate())+' '+pad(hrDate.getHours())+':00';
         synth.push({t: tStr, v: v.toFixed(3)});
       }
