@@ -316,8 +316,14 @@ var STATIONS = {
 
 // ── UTILS ──
 function fmtTime(iso){
-  var d=new Date(iso);
-  return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  // Parse directly from string to avoid UTC interpretation of NOAA's local time strings
+  // iso can be "YYYY-MM-DD HH:MM" or "YYYY-MM-DDTHH:MM"
+  var s = iso.replace('T',' ');
+  var hh = parseInt(s.slice(11,13), 10);
+  var mm = parseInt(s.slice(14,16), 10);
+  var ampm = hh >= 12 ? 'PM' : 'AM';
+  var h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return h12 + ':' + String(mm).padStart(2,'0') + ' ' + ampm;
 }
 function fmtHour(h){
   var a=h>=12?'PM':'AM',r=h%12===0?12:h%12;
@@ -462,10 +468,11 @@ function calcBoatScore(ws, wvH, surf, cross, sst, cloud){
   else if(ws<=15){  score-=2.5; facts.push({l:'Wind '+ws+' mph (-2.5)',col:'#ffcc80'});}
   else if(ws<=20){  score-=4;   facts.push({l:'Wind '+ws+' mph (-4)',col:'#ff8a65'});}
   else{             score-=6;   facts.push({l:'Wind '+ws+' mph (-6)',col:'#ef9a9a'});}
-  if(wvH<0.5)       facts.push({l:'Calm waves ✓',col:'#a5d6a7'});
-  else if(wvH<1.5)  facts.push({l:'Waves '+wvH+'ft — mild',col:'#fff59d'});
-  else if(wvH<2.5){ score-=1.5; facts.push({l:'Waves '+wvH+'ft (-1.5)',col:'#ffcc80'});}
-  else{             score-=3;   facts.push({l:'Waves '+wvH+'ft (-3)',col:'#ef9a9a'});}
+  if(wvH<1.0)       facts.push({l:'Waves '+wvH+'ft ✓',col:'#a5d6a7'});
+  else if(wvH<2.0){ score-=1;   facts.push({l:'Waves '+wvH+'ft (-1)',col:'#fff59d'});}
+  else if(wvH<3.0){ score-=2;   facts.push({l:'Waves '+wvH+'ft (-2)',col:'#ffcc80'});}
+  else if(wvH<4.0){ score-=3;   facts.push({l:'Waves '+wvH+'ft (-3)',col:'#ff8a65'});}
+  else{             score-=4;   facts.push({l:'Waves '+wvH+'ft (-4)',col:'#ef9a9a'});}
   if(cross){        score-=1;   facts.push({l:'Cross chop (-1)',col:'#ff8a65'});}
   if(sst>=80)       facts.push({l:'Water '+sst+'°F ✓',col:'#a5d6a7'});
   else if(sst>=74){ score-=0.5; facts.push({l:'Water '+sst+'°F (-.5)',col:'#fff59d'});}
@@ -583,7 +590,10 @@ function drawChart(data, unitLabel, view, hiloData, isToday){
         if(diff<bestDiff){bestDiff=diff;bestIdx=i;}
       });
       if(bestIdx<0||bestIdx>=data.length) return;
-      var hh=hlDate.getHours(), mm=hlDate.getMinutes();
+      // Parse time directly from string to avoid UTC shift
+      var hlStr = hl.t.replace('T',' ');
+      var hh = parseInt(hlStr.slice(11,13),10);
+      var mm = parseInt(hlStr.slice(14,16),10);
       markers.push({
         x: tx(bestIdx),
         y: ty(data[bestIdx].v),
@@ -786,9 +796,14 @@ async function loadAll(){
 
     // Tide table
     var tableRows = hiloRaw.map(p=>{
-      var d=new Date(p.t);
-      var today=new Date(); var tomorrow=new Date(); tomorrow.setDate(today.getDate()+1);
-      var dayLabel = d.toDateString()===today.toDateString()?'Today':d.toDateString()===tomorrow.toDateString()?'Tomorrow':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      // Parse date from string directly — "YYYY-MM-DD HH:MM"
+      var pDate = p.t.slice(0,10); // "YYYY-MM-DD"
+      var todayStr = nowIsoET().slice(0,10);
+      var tomorrowET = nowET(); tomorrowET.setDate(tomorrowET.getDate()+1);
+      var tomorrowStr = tomorrowET.getFullYear()+'-'+String(tomorrowET.getMonth()+1).padStart(2,'0')+'-'+String(tomorrowET.getDate()).padStart(2,'0');
+      // Get day of week from the date string without timezone shift
+      var dayOfWeek = new Date(pDate+'T12:00:00').getDay();
+      var dayLabel = pDate===todayStr?'Today':pDate===tomorrowStr?'Tomorrow':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek];
       var hi=p.type==='H';
       return '<tr><td>'+fmtTime(p.t)+'</td><td><span class="'+(hi?'bh':'bl')+'">'+(hi?'HIGH':'LOW')+'</span></td>'+
         '<td style="color:'+(hi?'#4fc3f7':'#e8d5a3')+';font-weight:700">'+parseFloat(p.v).toFixed(2)+' '+u+'</td>'+
