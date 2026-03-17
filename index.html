@@ -316,12 +316,11 @@ var STATIONS = {
 // Anclote Island is a subordinate station with poor harmonic data — use Port Richey (8726384)
 // as the tide prediction source but keep Anclote's lat/lon for weather/marine data
 var TIDE_STATION_OVERRIDE = {
-  '8726520': '8726917',  // Anclote Island → use NOAA station 8726917 (Anclote Island, accurate)
-  '8726384': '8726917',  // Port Richey → use same
-  '8726607': '8726917',  // New Port Richey → use same
-  '8726667': '8726917'   // Tarpon Springs → use same
+  '8726520': '8726917',  // Anclote Island → 8726917
+  '8726384': '8727012',  // Port Richey → 8727012
+  '8726607': '8726995',  // New Port Richey → 8726995
+  '8726667': '8726905'   // Tarpon Springs → 8726905
 };
-var TIDE_TIME_OFFSET_MINS = {}; // No offsets needed — 8726917 is accurate
 
 // ── UTILS ──
 function fmtTime(iso){
