@@ -313,17 +313,61 @@ var STATIONS = {
   '8726667': {name:'Tarpon Springs',  sub:'Pinellas County · Florida · Gulf Coast',            lat:28.1453, lon:-82.7556},
   '8726607': {name:'New Port Richey', sub:'Pasco County · Florida · Gulf Coast',               lat:28.2436, lon:-82.7198}
 };
-// Anclote Island is a subordinate station with poor harmonic data — use Port Richey (8726384)
-// as the tide prediction source but keep Anclote's lat/lon for weather/marine data
-// Hi/Lo tide station IDs — each station has accurate hi/lo predictions
+// Station override: map each water-level station to its tide-prediction station
+// 8726917 (Anclote Lighthouse) has NO harmonic predictions — removed from overrides
 var TIDE_STATION_OVERRIDE = {
-  '8726520': '8726917',  // Anclote Island
+  '8726520': '8726384',  // Anclote Island → Port Richey (nearest harmonic)
   '8726384': '8727012',  // Port Richey
   '8726607': '8726995',  // New Port Richey
   '8726667': '8726905'   // Tarpon Springs
 };
 // Stations that only have hi/lo data — hourly will be interpolated
-var HILO_ONLY_STATIONS = ['8727012','8726995','8726905'];
+var HILO_ONLY_STATIONS = ['8726384','8727012','8726995','8726905'];
+
+// ── WorldTides fallback ──────────────────────────────────────────────────────
+// NOAA predictions API is down due to their cloud migration (July 2026).
+// WorldTides uses the same NOAA harmonic data but runs independently.
+// Free key (10k calls/month): https://www.worldtides.info/register
+var WORLDTIDES_KEY = 'YOUR_KEY_HERE'; // ← paste your free key here
+
+function _wtToETStr(dtSec){
+  // Convert WorldTides Unix timestamp → "YYYY-MM-DD HH:MM" in Eastern time
+  var d = new Date(dtSec * 1000);
+  var et = new Date(d.toLocaleString('en-US', {timeZone:'America/New_York'}));
+  var p = n => String(n).padStart(2,'0');
+  return et.getFullYear()+'-'+p(et.getMonth()+1)+'-'+p(et.getDate())+
+         ' '+p(et.getHours())+':'+p(et.getMinutes());
+}
+
+function _wtStartSec(dateStr){
+  // dateStr is YYYYMMDD — build start-of-day Unix timestamp in local time
+  var yr=parseInt(dateStr.slice(0,4)), mo=parseInt(dateStr.slice(4,6))-1, dy=parseInt(dateStr.slice(6,8));
+  return Math.floor(new Date(yr,mo,dy,0,0,0).getTime()/1000);
+}
+
+async function fetchWorldTidesHiLo(lat, lon, dateStr, units, rangeDays){
+  if(!WORLDTIDES_KEY || WORLDTIDES_KEY==='YOUR_KEY_HERE') return [];
+  var scale = units==='m' ? 1 : 3.28084; // WorldTides → meters; convert to feet if needed
+  var url = `https://www.worldtides.info/api/v3?extremes&lat=${lat}&lon=${lon}`+
+            `&start=${_wtStartSec(dateStr)}&length=${(rangeDays||2)*86400}&key=${WORLDTIDES_KEY}`;
+  try{
+    var r = await fetch(url), j = await r.json();
+    if(!j.extremes) throw new Error(j.error||'No extremes');
+    return j.extremes.map(e=>({t:_wtToETStr(e.dt), v:(e.height*scale).toFixed(3), type:e.type==='High'?'H':'L'}));
+  }catch(e){ console.warn('WorldTides hilo failed:',e.message); return []; }
+}
+
+async function fetchWorldTidesHourly(lat, lon, dateStr, units, rangeDays){
+  if(!WORLDTIDES_KEY || WORLDTIDES_KEY==='YOUR_KEY_HERE') return [];
+  var scale = units==='m' ? 1 : 3.28084;
+  var url = `https://www.worldtides.info/api/v3?heights&lat=${lat}&lon=${lon}`+
+            `&start=${_wtStartSec(dateStr)}&length=${(rangeDays||2)*86400}&step=3600&key=${WORLDTIDES_KEY}`;
+  try{
+    var r = await fetch(url), j = await r.json();
+    if(!j.heights) throw new Error(j.error||'No heights');
+    return j.heights.map(h=>({t:_wtToETStr(h.dt), v:(h.height*scale).toFixed(3)}));
+  }catch(e){ console.warn('WorldTides hourly failed:',e.message); return []; }
+}
 
 // ── UTILS ──
 function fmtTime(iso){
@@ -388,22 +432,25 @@ function moonPhase(){
 
 // ── NOAA TIDES ──
 async function fetchNoaaTides(stationId, dateStr, datum, units, rangeDays){
-  // Hi/Lo predictions
   var u = units==='m'?'metric':'english';
   var rangeHrs = (rangeDays||2)*24;
   var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=hilo&begin_date=${dateStr}&range=${rangeHrs}`;
-  var r = await fetch(url);
-  var j = await r.json();
-  return j.predictions||[];
+  try{
+    var r = await fetch(url), j = await r.json();
+    if(j.error){ console.warn('NOAA hilo error:',j.error.message); return null; } // null = NOAA down
+    return j.predictions||[];
+  }catch(e){ console.warn('fetchNoaaTides network error:',e.message); return null; }
 }
 
 async function fetchNoaaHourly(stationId, dateStr, datum, units, rangeDays){
   var u = units==='m'?'metric':'english';
   var rangeHrs = (rangeDays||2)*24;
   var url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${stationId}&product=predictions&datum=${datum}&time_zone=lst_ldt&units=${u}&format=json&interval=h&begin_date=${dateStr}&range=${rangeHrs}`;
-  var r = await fetch(url);
-  var j = await r.json();
-  return j.predictions||[];
+  try{
+    var r = await fetch(url), j = await r.json();
+    if(j.error){ console.warn('NOAA hourly error:',j.error.message); return null; }
+    return j.predictions||[];
+  }catch(e){ console.warn('fetchNoaaHourly network error:',e.message); return null; }
 }
 
 async function fetchNoaaObserved(stationId, datum, units){
@@ -721,11 +768,24 @@ async function loadAll(){
     var isHiloOnly = HILO_ONLY_STATIONS.indexOf(tideStationId) >= 0;
     var [hiloRaw, hourlyRaw, weather, marine, observed] = await Promise.all([
       fetchNoaaTides(tideStationId, noaaDate, datum, units, rangeDays),
-      isHiloOnly ? Promise.resolve([]) : fetchNoaaHourly(tideStationId, noaaDate, datum, units, rangeDays),
+      isHiloOnly ? Promise.resolve(null) : fetchNoaaHourly(tideStationId, noaaDate, datum, units, rangeDays),
       fetchWeather(station.lat, station.lon),
       fetchMarine(station.lat, station.lon),
       fetchNoaaObserved(tideStationId, datum, units)
     ]);
+
+    // null = NOAA API failed — try WorldTides fallback
+    var usingWorldTides = false;
+    if(hiloRaw === null || hiloRaw.length === 0){
+      hiloRaw = await fetchWorldTidesHiLo(station.lat, station.lon, noaaDate, units, rangeDays);
+      if(hiloRaw.length > 0) usingWorldTides = true;
+    }
+    if(hourlyRaw === null || hourlyRaw.length === 0){
+      hourlyRaw = await fetchWorldTidesHourly(station.lat, station.lon, noaaDate, units, rangeDays);
+      if(hourlyRaw.length > 0) usingWorldTides = true;
+    }
+    if(hiloRaw === null) hiloRaw = [];
+    if(hourlyRaw === null) hourlyRaw = [];
 
     // ── TIDE DATA ──
     // If hourly predictions unavailable (subordinate stations), interpolate from hi/lo
@@ -780,7 +840,16 @@ async function loadAll(){
       return {v:parseFloat(p.v), hour:hourFromStr, label:p.t};
     });
     if(chartData.length === 0){
-      throw new Error('No tide data available for this station/date.');
+      var msg = WORLDTIDES_KEY && WORLDTIDES_KEY !== 'YOUR_KEY_HERE'
+        ? 'No tide data from NOAA or WorldTides for this station/date.'
+        : 'NOAA predictions are down (cloud migration). Add a free WorldTides key to restore tide data — see https://worldtides.info/register';
+      throw new Error(msg);
+    }
+
+    // Show data source in the badge if using fallback
+    if(usingWorldTides){
+      var badge = document.querySelector('.src-badge');
+      if(badge) badge.textContent = 'WorldTides (NOAA backup)';
     }
 
     // Status cards from hourly
